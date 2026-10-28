@@ -855,6 +855,8 @@ body {
     color: var(--cv-text-medium);
     line-height: 1.45;
     margin-top: 0.15rem;
+    text-align: justify;
+    text-justify: inter-word;
 }
 
 /* Badges / Tech tags in Projects */
