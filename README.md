@@ -1,83 +1,89 @@
 # ProCVX - Creador de Currículum Profesional
 
-Una aplicación web moderna, premium e interactiva diseñada para crear currículums profesionales adaptados al formato estándar de impresión **A4**. Pensada para cualquier tipo de público que busque una presentación de su perfil limpia, minimalista y de alto impacto visual.
+Una aplicación web moderna e interactiva para crear currículums profesionales listos para imprimir en formato **A4**. Pensada para cualquier tipo de público que busque una presentación de su perfil limpia, minimalista y de alto impacto visual.
 
 ---
 
 ## ✨ Características Principales
 
-*   **Edición en Tiempo Real:** Visualiza cómo se va estructurando tu currículum a doble columna a medida que escribes en los formularios.
-*   **Temas de Color Premium:** Elige entre 4 esquemas cromáticos modernos y vibrantes con un clic:
-    *   💧 **Sapphire** (Azul corporativo premium)
+*   **Edición en Tiempo Real:** Visualiza cómo se va estructurando tu currículum mientras escribes en los formularios.
+*   **Temas de Color:** Elige entre 4 esquemas cromáticos con un clic:
+    *   💧 **Sapphire** (Azul corporativo)
     *   ⚡ **Cyberpunk** (Tonos neón y futuristas)
     *   🌲 **Emerald** (Verde menta sofisticado)
-    *   ❤️ **Ruby** (Rojo vino elegante)
-*   **Secciones Flexibles y Visibilidad Dinámica:** Activa o desactiva secciones enteras (Sobre mí, Experiencia, Proyectos, Educación, Habilidades o Idiomas) usando cómodos *checkboxes* integrados en las cabeceras del editor.
-*   **Optimización de Impresión A4:** Diseñado con márgenes nativos CSS (`@page { margin: 12mm 14mm; }`) y división de bloques inteligente (`break-inside: avoid`), asegurando que la exportación a PDF sea perfecta y aproveche al máximo el espacio de la hoja sin dejar huecos en blanco.
-*   **Confirmaciones Seguras y UX Fluida:** El botón de limpiar datos utiliza un modal de confirmación HTML/CSS personalizado, previniendo congelamientos por bloqueadores de pop-ups en previsualizadores integrados.
-*   **Soporte Bilingüe (Internacionalización):** Interfaz completa y dinámica en Español e Inglés, traduciendo datos de ejemplo, botones, vistas previas vacías y advertencias legales en tiempo real.
-*   **Persistencia Local Automática:** Guarda el progreso automáticamente en el `localStorage` del navegador para que no pierdas nada al recargar o cerrar la pestaña.
-*   **Carga de Ejemplo:** Al ingresar por primera vez, se cargarán datos de ejemplo automáticamente (en el idioma seleccionado) para facilitar la visualización inmediata de cómo quedará el currículum. También incluye un botón para recargarlos manualmente.
+    *   ❄️ **Nordic** (Tonos fríos y sobrios)
+*   **Tres Estructuras (Plantillas):** **Moderno** (dos columnas), **Minimalista** (una columna, cabecera centrada) y **Clásico** (tipografía con serifa).
+*   **Secciones Flexibles:** Activa o desactiva secciones enteras (Sobre mí, Experiencia, Proyectos, Educación, Habilidades, Tecnología o Idiomas) con los *checkboxes* de las cabeceras, y reordénalas arrastrándolas o con las flechas.
+*   **Descripciones con Viñetas y Texto Justificado:** Las descripciones de experiencia y proyectos se muestran justificadas, y las líneas con viñeta (`•`) llevan sangría francesa para que el texto quede alineado.
+*   **Foto de Perfil Optimizada:** La imagen se reduce automáticamente (máx. 400 px, JPEG) para que ocupe poco en el navegador y en los archivos exportados.
+*   **Importar / Exportar JSON:** Guarda tu currículum en un archivo y cárgalo cuando quieras, en este u otro dispositivo.
+*   **Impresión A4:** Márgenes físicos de página (`@page { margin: 18mm 16mm; }`) y bloques que no se parten entre páginas (`break-inside: avoid`), para una exportación a PDF limpia.
+*   **Confirmaciones Seguras:** El botón de limpiar datos usa un modal propio, sin depender de los pop-ups del navegador.
+*   **Interfaz Bilingüe (ES / EN):** Textos, ejemplos, avisos y niveles de idioma se traducen en tiempo real.
+*   **Persistencia Local Automática:** El progreso, el tema, la plantilla y el orden de las secciones se guardan en el `localStorage` del navegador.
+*   **Datos de Ejemplo:** En la primera visita se cargan datos de ejemplo (en el idioma elegido); el botón **Ejemplo** permite recargarlos.
+*   **Privacidad Real:** Todo se procesa en tu navegador. Librerías, iconos y tipografías se alojan en el propio proyecto: no se hacen peticiones a servidores de terceros.
 
 ---
 
 ## 🛠️ Tecnologías Utilizadas
 
-*   **HTML5** semántico y estructurado.
-*   **CSS3** responsivo y moderno (Variables nativas, efectos de cristal/glassmorphism, animaciones fluidas, Grid y Flexbox).
-*   **JavaScript Vanilla** (Programación modular y defensiva, manipulación reactiva del DOM).
-*   **Lucide Icons** para la iconografía interactiva SVG.
+*   **HTML5** semántico.
+*   **CSS3** (variables nativas, glassmorphism, Grid y Flexbox).
+*   **JavaScript Vanilla** (modular y defensivo).
+*   **[Lucide](https://lucide.dev)** 1.63.0 (iconos SVG) y **[SortableJS](https://sortablejs.github.io/Sortable/)** 1.15.7 (arrastrar secciones), alojadas en `vendor/`.
+*   Tipografías **Outfit**, **Plus Jakarta Sans** y **JetBrains Mono** (licencia OFL), alojadas en `fonts/`.
 
 ---
 
 ## 🏗️ Arquitectura y Clean Code
 
-El proyecto ha sido recientemente refactorizado para seguir principios de **Clean Code** y facilitar su escalabilidad:
-*   **Modularidad en JS:** La lógica de renderizado principal (`updatePreview`) está dividida en submódulos especializados por cada sección del currículum (Principio de Única Responsabilidad).
-*   **Factory Pattern:** La creación de bloques dinámicos de HTML (para añadir experiencias, idiomas, etc.) utiliza funciones de fábrica para evitar duplicación de código de interfaz.
-*   **CSS Estructurado:** Separación estricta entre estilos e interfaz, evitando estilos en línea (inline CSS) y manteniendo selectores semánticos limpios.
+*   **Modularidad en JS:** La lógica de renderizado (`updatePreview`) está dividida en submódulos por sección del currículum.
+*   **Factory Pattern:** Los bloques dinámicos del editor (experiencias, idiomas, etc.) se crean con funciones de fábrica.
+*   **Seguridad:** Todo texto del usuario se escapa antes de insertarse en el HTML (también al importar un JSON).
+*   **Carga en bloque:** Al cargar muchos elementos (ejemplo o datos guardados) la interfaz se refresca una sola vez.
+*   **CSS Estructurado:** Estilos separados de la estructura y selectores semánticos.
 
 ---
 
 ## 🚀 Cómo Ejecutar el Proyecto en Local
 
-Dado que la aplicación es puramente estática, solo requiere un servidor HTTP básico para funcionar de forma óptima y permitir la persistencia local:
+La aplicación es estática; solo necesita un servidor HTTP básico:
 
 ### Opción 1: Servidor rápido con Python
-Abre la terminal en la raíz del proyecto y ejecuta:
 ```bash
 python3 -m http.server 8080
 ```
-Luego entra en tu navegador en [http://localhost:8080](http://localhost:8080).
+Luego abre [http://localhost:8080](http://localhost:8080).
 
 ### Opción 2: VS Code - Live Server
-Si utilizas Visual Studio Code, puedes instalar la extensión **Live Server** y pulsar el botón **Go Live** situado en la barra inferior.
+Instala la extensión **Live Server** y pulsa **Go Live** en la barra inferior.
 
 ---
 
 ## 📄 Guía de Exportación a PDF / Impresión
 
-Para conseguir el resultado ideal de una página limpia sin cabeceras extrañas del navegador:
-
-1.  Haz clic en el botón **Exportar a PDF** en la esquina superior derecha de la aplicación.
-2.  En el cuadro de diálogo de impresión de tu sistema o navegador:
-    *   **Destino:** Guardar como PDF / Imprimir en PDF.
-    *   **Páginas:** Todo.
-    *   **Diseño:** Vertical.
-    *   **Tamaño de papel:** A4.
-    *   **Márgenes:** Predeterminado (el diseño ya gestiona los márgenes físicos de 12mm x 14mm internamente).
-    *   ⚠️ **Opciones adicionales / Configuración avanzada:** Desmarca la opción **"Cabeceras y pies de página"** para evitar que aparezca la fecha, la URL o el título del documento en el PDF.
-    *   Activa **"Gráficos de fondo"** si deseas que se exporten correctamente todos los degradados e intensidades de color elegidos.
+1.  Pulsa **Imprimir PDF** en la esquina superior derecha.
+2.  En el diálogo de impresión:
+    *   **Destino:** Guardar como PDF.
+    *   **Diseño:** Vertical. **Tamaño de papel:** A4.
+    *   **Márgenes:** Predeterminado (el diseño ya gestiona los márgenes de 18 mm × 16 mm).
+    *   ⚠️ Desmarca **"Encabezados y pies de página"** para que no aparezcan la fecha, la URL o el título.
+    *   Activa **"Gráficos de fondo"** si quieres que se exporten los colores del tema.
 
 ---
 
 ## 📁 Estructura de Archivos
 
 ```
-cv-builder/
-├── index.html        # Estructura del maquetado (Paneles de Editor y Vista Previa)
-├── style.css         # Estilos visuales, variables de tema y optimizaciones de impresión
-├── script.js        # Lógica de renderizado, inputs dinámicos y localStorage
-├── .gitignore        # Exclusión de metadatos de sistema y entornos
-└── README.md         # Documentación del proyecto
+ProCVX/
+├── index.html          # Estructura (paneles de editor y vista previa)
+├── style.css           # Estilos, temas, plantillas y reglas de impresión
+├── script.js           # Lógica: renderizado, formularios dinámicos, i18n, localStorage
+├── fonts/              # Tipografías alojadas (fonts.css + files/*.woff2) y licencias
+├── vendor/             # Lucide y SortableJS alojados, con sus licencias
+├── LICENSE
+└── README.md
 ```
+
+> Al actualizar `style.css` o `script.js`, sube también el número `?v=` de su etiqueta en `index.html` para que el navegador no use la copia en caché.

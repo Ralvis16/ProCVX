@@ -129,9 +129,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>1. Procesamiento de Datos Personales</strong><br>
                 Toda la información ingresada por el usuario (nombres, teléfonos, correos electrónicos, historial laboral y fotografías) es procesada <strong>exclusivamente en el navegador web local</strong> del dispositivo.</p>
                 <p><strong>2. Generación del Documento</strong><br>
-                La generación del archivo PDF se realiza localmente utilizando librerías de cliente (Javascript). Ningún documento final ni dato intermediario viaja por internet hacia los creadores de esta página ni hacia terceros.</p>
+                La generación del archivo PDF se realiza localmente mediante la función de impresión de tu propio navegador. Ningún documento final ni dato intermediario viaja por internet hacia los creadores de esta página ni hacia terceros.</p>
                 <p><strong>3. Responsabilidad del Usuario</strong><br>
                 Al ser una aplicación 100% del lado del cliente, es responsabilidad exclusiva del usuario proteger la información generada o descargada en su propio dispositivo.</p>
+                <p><strong>4. Recursos de Terceros</strong><br>
+                Las librerías, los iconos y las tipografías se alojan en el propio sitio, por lo que la aplicación no carga recursos desde servidores de terceros.</p>
             `,
             storage_title: "Almacenamiento Local y Cookies",
             storage_body: `
@@ -155,7 +157,11 @@ document.addEventListener('DOMContentLoaded', () => {
             modal_confirm_title: "¿Confirmar acción?",
             modal_confirm_body: "¿Estás seguro de que deseas limpiar todos los campos del currículum? Se perderá todo el progreso actual y guardado.",
             modal_btn_cancel: "Cancelar",
-            modal_btn_confirm: "Sí, limpiar todo"
+            modal_btn_confirm: "Sí, limpiar todo",
+            alert_photo_error: "Error al intentar leer la imagen.",
+            alert_photo_invalid: "El archivo seleccionado no es una imagen válida.",
+            alert_import_ok: "Currículum cargado correctamente.",
+            alert_import_error: "Error al leer el archivo JSON."
         },
         en: {
             theme_label: "Theme:",
@@ -279,9 +285,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <p><strong>1. Personal Data Processing</strong><br>
                 All information entered by the user (names, phones, emails, work history, and photographs) is processed <strong>exclusively in the local web browser</strong> of the device.</p>
                 <p><strong>2. Document Generation</strong><br>
-                The generation of the PDF file is done locally using client-side libraries (Javascript). No final document or intermediary data travels over the internet to the creators of this page or third parties.</p>
+                The PDF file is generated locally using your own browser's print function. No final document or intermediary data travels over the internet to the creators of this page or third parties.</p>
                 <p><strong>3. User Responsibility</strong><br>
                 Being a 100% client-side application, it is the exclusive responsibility of the user to protect the information generated or downloaded on their own device.</p>
+                <p><strong>4. Third-Party Resources</strong><br>
+                Libraries, icons and fonts are hosted on the site itself, so the application does not load resources from third-party servers.</p>
             `,
             storage_title: "Local Storage and Cookies",
             storage_body: `
@@ -305,9 +313,19 @@ document.addEventListener('DOMContentLoaded', () => {
             modal_confirm_title: "Confirm action?",
             modal_confirm_body: "Are you sure you want to clear all resume fields? All current and saved progress will be lost.",
             modal_btn_cancel: "Cancel",
-            modal_btn_confirm: "Yes, clear all"
+            modal_btn_confirm: "Yes, clear all",
+            alert_photo_error: "Error reading the image.",
+            alert_photo_invalid: "The selected file is not a valid image.",
+            alert_import_ok: "Resume loaded successfully.",
+            alert_import_error: "Error reading the JSON file."
         }
     };
+
+    // Translates a key using the current interface language
+    function tr(key) {
+        const lang = localStorage.getItem('procvx_lang') || 'es';
+        return (translations[lang] || translations['es'])[key] || key;
+    }
 
     function updateLanguage(lang) {
         const t = translations[lang];
@@ -358,16 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isDefault) {
                     input.value = t[key];
                 }
-            }
-        }
-
-        // If sample data is currently active, reload it in the new language
-        const inputFullname = document.getElementById('input-fullname');
-        if (inputFullname && inputFullname.value === 'Alex Torto Ramos') {
-            const btnSampleData = document.getElementById('btn-sample-data');
-            if (btnSampleData) {
-                // Call it directly to bypass event listeners creating duplicate data if we didn't clear first
-                btnSampleData.click();
             }
         }
 
@@ -448,6 +456,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Escapes user text before putting it in HTML attributes / innerHTML
+    function escapeHtml(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    // Language levels: stored in Spanish (backwards compatible), shown translated
+    const LEVEL_LABEL_KEYS = {
+        'Básico': 'opt_basic', 'Intermedio': 'opt_intermediate', 'Avanzado': 'opt_advanced',
+        'Bilingüe': 'opt_bilingual', 'Nativo': 'opt_native'
+    };
+    const LEVEL_ALIASES = {
+        'Basic': 'Básico', 'Intermediate': 'Intermedio', 'Advanced': 'Avanzado',
+        'Bilingual': 'Bilingüe', 'Native': 'Nativo'
+    };
+    function normalizeLevel(level) {
+        return LEVEL_ALIASES[level] || level;
+    }
+
+    // Turns a multi-line description into paragraphs and bullet lists (lines starting with "•")
+    // so wrapped bullet lines get a hanging indent and stay justified.
+    function formatDescHtml(text) {
+        let html = '';
+        let inList = false;
+        const closeList = () => {
+            if (inList) { html += '</ul>'; inList = false; }
+        };
+        String(text ?? '').split('\n').forEach(raw => {
+            const line = raw.trim();
+            if (!line) return;
+            const bullet = line.match(/^•\s*(.*)$/);
+            if (bullet) {
+                if (!bullet[1]) return; // empty bullet
+                if (!inList) { html += '<ul class="cv-bullets">'; inList = true; }
+                html += `<li>${escapeHtml(bullet[1])}</li>`;
+            } else {
+                closeList();
+                html += `<p>${escapeHtml(line)}</p>`;
+            }
+        });
+        closeList();
+        return html;
+    }
+
+    // True when a description has real text (not empty or just auto-inserted bullets)
+    function hasRealText(text) {
+        return typeof text === 'string' && text.replace(/[•\s]/g, '') !== '';
+    }
+
     // Counter IDs for unique identification
     let expIdCounter = 0;
     let projIdCounter = 0;
@@ -472,103 +533,124 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    // While > 0, adding items skips the per-item refresh (icons, translations, preview, save).
+    // runBulk() does a single refresh at the end instead of one per item.
+    let bulkDepth = 0;
+    function runBulk(fn) {
+        bulkDepth++;
+        try {
+            fn();
+        } finally {
+            bulkDepth--;
+        }
+        if (bulkDepth === 0) {
+            safeCreateIcons();
+            updateLanguage(localStorage.getItem('procvx_lang') || 'es');
+        }
+    }
+
     function appendDynamicField(listElement, id, innerHtml) {
         if (!listElement) return;
         listElement.insertAdjacentHTML('beforeend', createDynamicItemContainer(id, innerHtml));
         setupItemListeners(id);
-        safeCreateIcons();
-        updatePreview();
+        if (bulkDepth === 0) {
+            safeCreateIcons();
+            updatePreview();
+        }
     }
 
     // Add Work Experience Form Group
     function addExperienceField(data = {}) {
+        data = data || {};
         const id = `exp-${expIdCounter++}`;
         const innerHtml = `
                 <div class="form-group grid-2">
                     <label data-i18n="lbl_exp_role">Puesto / Cargo</label>
-                    <input type="text" class="exp-role" data-i18n="ph_exp_role" value="${data.role || ''}" placeholder="Ej. Desarrollador Web Prácticas">
+                    <input type="text" class="exp-role" data-i18n="ph_exp_role" value="${escapeHtml(data.role)}" placeholder="Ej. Desarrollador Web Prácticas">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_exp_company">Empresa</label>
-                    <input type="text" class="exp-company" data-i18n="ph_exp_company" value="${data.company || ''}" placeholder="Ej. Innova Soft S.L.">
+                    <input type="text" class="exp-company" data-i18n="ph_exp_company" value="${escapeHtml(data.company)}" placeholder="Ej. Innova Soft S.L.">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_exp_dates">Periodo (Fechas)</label>
-                    <input type="text" class="exp-dates" data-i18n="ph_exp_dates" value="${data.dates || ''}" placeholder="Ej. Ene 2025 - Mar 2026">
+                    <input type="text" class="exp-dates" data-i18n="ph_exp_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. Ene 2025 - Mar 2026">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_exp_desc">Descripción / Logros</label>
-                    <textarea class="exp-desc bullet-textarea" data-i18n="ph_exp_desc" rows="3" placeholder="Ej. Desarrollo de APIs en Java, diseño de vistas responsivas...">${data.desc || ''}</textarea>
+                    <textarea class="exp-desc bullet-textarea" data-i18n="ph_exp_desc" rows="3" placeholder="Ej. Desarrollo de APIs en Java, diseño de vistas responsivas...">${escapeHtml(data.desc)}</textarea>
                 </div>
         `;
         appendDynamicField(experienceList, id, innerHtml);
-        updateLanguage(localStorage.getItem('procvx_lang') || 'es');
+        if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
     // Add Project Form Group
     function addProjectField(data = {}) {
+        data = data || {};
         const id = `proj-${projIdCounter++}`;
         const innerHtml = `
                 <div class="form-group">
                     <label data-i18n="lbl_proj_name">Nombre del Proyecto</label>
-                    <input type="text" class="proj-title" data-i18n="ph_proj_name" value="${data.title || ''}" placeholder="Ej. E-commerce App">
+                    <input type="text" class="proj-title" data-i18n="ph_proj_name" value="${escapeHtml(data.title)}" placeholder="Ej. E-commerce App">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_proj_tech">Tecnologías (Separadas por comas)</label>
-                    <input type="text" class="proj-tech" data-i18n="ph_proj_tech" value="${data.tech || ''}" placeholder="Ej. Flutter, Firebase, Dart">
+                    <input type="text" class="proj-tech" data-i18n="ph_proj_tech" value="${escapeHtml(data.tech)}" placeholder="Ej. Flutter, Firebase, Dart">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_proj_desc">Descripción</label>
-                    <textarea class="proj-desc" rows="2" data-i18n="ph_proj_desc" placeholder="Ej. Aplicación móvil de gestión logística con base de datos local y offline...">${data.desc || ''}</textarea>
+                    <textarea class="proj-desc" rows="2" data-i18n="ph_proj_desc" placeholder="Ej. Aplicación móvil de gestión logística con base de datos local y offline...">${escapeHtml(data.desc)}</textarea>
                 </div>
         `;
         appendDynamicField(projectsList, id, innerHtml);
-        updateLanguage(localStorage.getItem('procvx_lang') || 'es');
+        if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
     // Add Education Form Group
     function addEducationField(data = {}) {
+        data = data || {};
         const id = `edu-${eduIdCounter++}`;
         const innerHtml = `
                 <div class="form-group">
                     <label data-i18n="lbl_edu_degree">Titulación / Grado / Certificación</label>
-                    <input type="text" class="edu-degree" data-i18n="ph_edu_degree" value="${data.degree || ''}" placeholder="Ej. C.F.G.S. Desarrollo de Aplicaciones Web">
+                    <input type="text" class="edu-degree" data-i18n="ph_edu_degree" value="${escapeHtml(data.degree)}" placeholder="Ej. C.F.G.S. Desarrollo de Aplicaciones Web">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_edu_school">Centro de Estudios / Institución</label>
-                    <input type="text" class="edu-school" data-i18n="ph_edu_school" value="${data.school || ''}" placeholder="Ej. I.E.S. Tecnológico">
+                    <input type="text" class="edu-school" data-i18n="ph_edu_school" value="${escapeHtml(data.school)}" placeholder="Ej. I.E.S. Tecnológico">
                 </div>
                 <div class="form-group">
                     <label data-i18n="lbl_edu_dates">Periodo (Fechas)</label>
-                    <input type="text" class="edu-dates" data-i18n="ph_edu_dates" value="${data.dates || ''}" placeholder="Ej. 2024 - 2026">
+                    <input type="text" class="edu-dates" data-i18n="ph_edu_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2024 - 2026">
                 </div>
         `;
         appendDynamicField(educationList, id, innerHtml);
-        updateLanguage(localStorage.getItem('procvx_lang') || 'es');
+        if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
     // Add Skill Form Group
-    function addSkillField(name = '', level = '4') {
+    function addSkillField(name = '') {
         const id = `skill-${skillIdCounter++}`;
         const innerHtml = `
                 <div class="form-group">
                     <label data-i18n="lbl_skill_name">Habilidad / Tecnología</label>
-                    <input type="text" class="skill-name" data-i18n="ph_skill_name" value="${name}" placeholder="Ej. Liderazgo, React, Excel">
+                    <input type="text" class="skill-name" data-i18n="ph_skill_name" value="${escapeHtml(name)}" placeholder="Ej. Liderazgo, React, Excel">
                 </div>
-                <input type="hidden" class="skill-level" value="${level}">
         `;
         appendDynamicField(skillsList, id, innerHtml);
-        updateLanguage(localStorage.getItem('procvx_lang') || 'es');
+        if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
     // Add Language Form Group
     function addLanguageField(name = '', level = 'Básico') {
+        level = normalizeLevel(level);
         const id = `lang-${langIdCounter++}`;
         const innerHtml = `
                 <div class="form-group grid-2">
                     <div>
                         <label data-i18n="lbl_lang_name">Idioma</label>
-                        <input type="text" class="lang-name" data-i18n="ph_lang_name" value="${name}" placeholder="Ej. Inglés">
+                        <input type="text" class="lang-name" data-i18n="ph_lang_name" value="${escapeHtml(name)}" placeholder="Ej. Inglés">
                     </div>
                     <div>
                         <label data-i18n="lbl_lang_level">Nivel</label>
@@ -583,7 +665,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
         `;
         appendDynamicField(languagesList, id, innerHtml);
-        updateLanguage(localStorage.getItem('procvx_lang') || 'es');
+        if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
     // Setup input and delete event listeners for a dynamic item
@@ -631,21 +713,58 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // Photo Upload Logic
     // ----------------------------------------------------
+
+    // Scales an image down (max side in px) and re-encodes it as JPEG so it stays small
+    // enough for localStorage and for the exported JSON.
+    function resizeImageFile(file, maxSide, quality) {
+        return new Promise((resolve, reject) => {
+            const url = URL.createObjectURL(file);
+            const img = new Image();
+            img.onload = () => {
+                try {
+                    const scale = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+                    const width = Math.max(1, Math.round(img.naturalWidth * scale));
+                    const height = Math.max(1, Math.round(img.naturalHeight * scale));
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff'; // flatten transparency (JPEG has none)
+                    ctx.fillRect(0, 0, width, height);
+                    ctx.drawImage(img, 0, 0, width, height);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                } catch (err) {
+                    reject(err);
+                } finally {
+                    URL.revokeObjectURL(url);
+                }
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('image load failed'));
+            };
+            img.src = url;
+        });
+    }
     if (inputPhoto) {
         inputPhoto.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onerror = function (err) {
-                    alert('Error al intentar leer la imagen.');
-                };
-                reader.onload = function(event) {
-                    currentPhoto = event.target.result;
+            if (!file) return;
+            if (!file.type || !file.type.startsWith('image/')) {
+                alert(tr('alert_photo_invalid'));
+                inputPhoto.value = '';
+                return;
+            }
+            resizeImageFile(file, 400, 0.85)
+                .then(dataUrl => {
+                    currentPhoto = dataUrl;
                     updatePreview();
                     saveToLocalStorage();
-                };
-                reader.readAsDataURL(file);
-            }
+                })
+                .catch(() => {
+                    alert(tr('alert_photo_error'));
+                    inputPhoto.value = '';
+                });
         });
     }
 
@@ -714,11 +833,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="cv-item-block">
                 <div class="cv-item-header">
-                    <div class="cv-item-title">${role || t.lbl_exp_role}</div>
-                    <div class="cv-item-meta">${company || t.lbl_exp_company}</div>
+                    <div class="cv-item-title">${role ? escapeHtml(role) : t.lbl_exp_role}</div>
+                    <div class="cv-item-meta">${company ? escapeHtml(company) : t.lbl_exp_company}</div>
                 </div>
-                <div class="cv-item-dates">${dates || ''}</div>
-                ${desc ? `<div class="cv-item-desc">${desc.replace(/\n/g, '<br>')}</div>` : ''}
+                <div class="cv-item-dates">${escapeHtml(dates)}</div>
+                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
             </div>
         `;
     }
@@ -727,15 +846,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const techBadges = techString.split(',')
             .map(t => t.trim())
             .filter(t => t !== '')
-            .map(t => `<span class="cv-badge-tech">${t}</span>`)
+            .map(t => `<span class="cv-badge-tech">${escapeHtml(t)}</span>`)
             .join('');
 
         return `
             <div class="cv-item-block">
                 <div class="cv-item-header">
-                    <div class="cv-item-title">${title}</div>
+                    <div class="cv-item-title">${escapeHtml(title)}</div>
                 </div>
-                ${desc ? `<div class="cv-item-desc">${desc.replace(/\n/g, '<br>')}</div>` : ''}
+                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
                 ${techBadges ? `<div class="cv-item-tech">${techBadges}</div>` : ''}
             </div>
         `;
@@ -746,9 +865,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const t = translations[currentLang] || translations['es'];
         return `
             <div class="cv-item-block">
-                <div class="cv-item-title">${degree || t.lbl_edu_degree}</div>
-                <div class="cv-item-meta">${school || t.lbl_edu_school}</div>
-                <div class="cv-item-dates">${dates || ''}</div>
+                <div class="cv-item-title">${degree ? escapeHtml(degree) : t.lbl_edu_degree}</div>
+                <div class="cv-item-meta">${school ? escapeHtml(school) : t.lbl_edu_school}</div>
+                <div class="cv-item-dates">${escapeHtml(dates)}</div>
             </div>
         `;
     }
@@ -837,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const name = item.querySelector('.skill-name').value;
                     
                     if (name) {
-                        const skillHtml = `<span class="cv-tag">${name}</span>`;
+                        const skillHtml = `<span class="cv-tag">${escapeHtml(name)}</span>`;
                         tagsContainer.insertAdjacentHTML('beforeend', skillHtml);
                     }
                 });
@@ -849,12 +968,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSoftSkillsPreview() {
         const text = inputSoftSkillsDesc.value;
         const softSkillsSection = document.getElementById('cv-section-softskills');
-        if (text.trim() === '') {
+        if (!hasRealText(text)) {
             softSkillsSection.style.display = 'none';
         } else {
             softSkillsSection.style.display = 'flex';
             if(previewSoftSkillsDesc) {
-                previewSoftSkillsDesc.textContent = text;
+                previewSoftSkillsDesc.innerHTML = formatDescHtml(text);
             }
         }
     }
@@ -873,7 +992,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     hasLangs = true;
                     const langDiv = document.createElement('div');
                     langDiv.style.marginBottom = '5px';
-                    langDiv.innerHTML = `<strong>${name}:</strong> ${level}`;
+                    const currentLang = localStorage.getItem('procvx_lang') || 'es';
+                    const tl = translations[currentLang] || translations['es'];
+                    const levelLabel = tl[LEVEL_LABEL_KEYS[level]] || level;
+                    const strong = document.createElement('strong');
+                    strong.textContent = name + ':';
+                    langDiv.appendChild(strong);
+                    langDiv.appendChild(document.createTextNode(' ' + levelLabel));
                     previewLanguagesList.appendChild(langDiv);
                 }
             });
@@ -1085,6 +1210,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Save and apply lang
                 localStorage.setItem('procvx_lang', lang);
                 updateLanguage(lang);
+                // If the untouched sample is showing, reload it in the new language
+                if (inputFullname.value === 'Alex Torto Ramos') {
+                    btnSampleData.click();
+                }
             });
         });
     }
@@ -1204,7 +1333,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // Load Sample Data (For Multiplatform Developer Student)
     // ----------------------------------------------------
-    btnSampleData.addEventListener('click', () => {
+    btnSampleData.addEventListener('click', () => runBulk(() => {
         // Reset and enable all toggles
         document.querySelectorAll('.section-toggle').forEach(toggle => {
             toggle.checked = true;
@@ -1250,11 +1379,11 @@ document.addEventListener('DOMContentLoaded', () => {
             addLanguageField('English', 'Advanced');
             addLanguageField('French', 'Intermediate');
             
-            addSkillField('Agile Management', '5');
-            addSkillField('Leadership', '4');
-            addSkillField('Advanced Microsoft Excel', '5');
-            addSkillField('Negotiation', '4');
-            addSkillField('Python', '3');
+            addSkillField('Agile Management');
+            addSkillField('Leadership');
+            addSkillField('Advanced Microsoft Excel');
+            addSkillField('Negotiation');
+            addSkillField('Python');
             
             addExperienceField({
                 role: 'Senior Project Manager',
@@ -1349,15 +1478,15 @@ document.addEventListener('DOMContentLoaded', () => {
             addLanguageField('Inglés', 'Avanzado');
             addLanguageField('Francés', 'Intermedio');
             
-            addSkillField('Gestión Ágil', '5');
-            addSkillField('Liderazgo', '4');
-            addSkillField('Microsoft Excel Avanzado', '5');
-            addSkillField('Negociación', '4');
-            addSkillField('Python', '3');
+            addSkillField('Gestión Ágil');
+            addSkillField('Liderazgo');
+            addSkillField('Microsoft Excel Avanzado');
+            addSkillField('Negociación');
+            addSkillField('Python');
             addExperienceField({
                 role: 'Gestor de Proyectos Senior',
                 company: 'Innovación Global S.A.',
-                dates: 'Mar 2021 - Present',
+                dates: 'Mar 2021 - Actualidad',
                 desc: '• Liderazgo de un equipo de 15 personas para la implementación de nuevos procesos operativos.\n• Reducción de costes operativos en un 20% durante el primer año.\n• Planificación y ejecución de presupuestos anuales y reporte de KPIs.'
             });
             addExperienceField({
@@ -1420,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if(inputPhoto) inputPhoto.value = '';
 
         updatePreview();
-    });
+    }));
 
     // ----------------------------------------------------
     // Clear Form Data (Custom Modal Triggered)
@@ -1530,11 +1659,14 @@ document.addEventListener('DOMContentLoaded', () => {
             reader.onload = (e) => {
                 try {
                     const importedState = JSON.parse(e.target.result);
+                    if (!importedState || typeof importedState !== 'object' || Array.isArray(importedState)) {
+                        throw new Error('Invalid CV data');
+                    }
                     localStorage.setItem('procvx-state', JSON.stringify(importedState));
                     loadFromLocalStorage();
-                    alert('Currículum cargado correctamente.');
+                    alert(tr('alert_import_ok'));
                 } catch (err) {
-                    alert('Error al leer el archivo JSON.');
+                    alert(tr('alert_import_error'));
                 }
                 inputJsonFile.value = '';
             };
@@ -1555,10 +1687,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.title = `${baseName}_ProCVX`;
         
         // Trigger native print dialog
+        // Restore the title once the print dialog closes (print() can be async on some browsers)
+        window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
         window.print();
-        
-        // Restore the original document title
-        document.title = originalTitle;
     });
 
     // ----------------------------------------------------
@@ -1576,8 +1707,7 @@ document.addEventListener('DOMContentLoaded', () => {
             linkedin: inputLinkedin.value,
             summary: inputSummary.value,
             skills: Array.from(skillsList.querySelectorAll('.dynamic-item')).map(item => ({
-                name: item.querySelector('.skill-name').value,
-                level: item.querySelector('.skill-level').value
+                name: item.querySelector('.skill-name').value
             })),
             titles: {
                 profile: inputTitleProfile.value,
@@ -1642,7 +1772,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Note: we can't save theme and template inside cvData right now because import/export 
         // doesn't usually override layout, but let's save them to localStorage independently.
-        localStorage.setItem('procvx-state', JSON.stringify(cvData));
+        try {
+            localStorage.setItem('procvx-state', JSON.stringify(cvData));
+        } catch (e) {
+            // Quota exceeded (usually a large photo). Keep the app working.
+            console.warn('ProCVX: could not save to localStorage', e);
+        }
         
         // Save Section Order
         const orderedIds = Array.from(document.querySelectorAll('.section-toggle'))
@@ -1662,6 +1797,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadFromLocalStorage() {
+        // Snapshot of the stored data BEFORE anything calls updatePreview(),
+        // which saves the (still empty) form and would overwrite it.
+        const stored = {
+            state: localStorage.getItem('procvx-state'),
+            theme: localStorage.getItem('procvx-theme'),
+            template: localStorage.getItem('procvx-template'),
+            order: localStorage.getItem('procvx-section-order')
+        };
+
         // Load Language
         const savedLang = localStorage.getItem('procvx_lang') || 'es';
         const langDropdownContainer = document.getElementById('lang-dropdown-container');
@@ -1680,8 +1824,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Load Theme
-        const savedTheme = localStorage.getItem('procvx-theme') || 'sapphire';
-        const savedTemplate = localStorage.getItem('procvx-template') || 'modern';
+        const savedTheme = stored.theme || 'sapphire';
+        const savedTemplate = stored.template || 'modern';
         
         document.body.className = '';
         document.body.classList.add(`theme-${savedTheme}`);
@@ -1727,7 +1871,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Restore Section Order
-        const savedOrderStr = localStorage.getItem('procvx-section-order');
+        const savedOrderStr = stored.order;
         if (savedOrderStr) {
             try {
                 const savedOrder = JSON.parse(savedOrderStr);
@@ -1750,7 +1894,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Load State
-        const savedStateString = localStorage.getItem('procvx-state');
+        const savedStateString = stored.state;
         if (!savedStateString) {
             // Load Sample Data on first visit to impress the user immediately!
             btnSampleData.click();
@@ -1808,35 +1952,23 @@ document.addEventListener('DOMContentLoaded', () => {
             inputSoftSkillsDesc.value = state.softskillsDesc || '';
             currentPhoto = state.photo || null;
 
-            // Clear Dynamic Lists before loadingers
+            // Clear dynamic lists before loading
             experienceList.innerHTML = '';
             projectsList.innerHTML = '';
             educationList.innerHTML = '';
             if(skillsList) skillsList.innerHTML = '';
             if(languagesList) languagesList.innerHTML = '';
 
-            if(state.skills) {
-                if(skillsList) skillsList.innerHTML = '';
-                state.skills.forEach(sk => addSkillField(sk.name, sk.level));
-            }
-            
-            if (Array.isArray(state.languages)) {
-                if(languagesList) languagesList.innerHTML = '';
-                state.languages.forEach(lg => addLanguageField(lg.name, lg.level));
-            }
+            // Only keep real objects (ignores null/garbage entries in imported files)
+            const validItems = list => Array.isArray(list) ? list.filter(item => item && typeof item === 'object') : [];
 
-            // Rebuild Experience lists
-            if (Array.isArray(state.experience)) {
-                state.experience.forEach(exp => addExperienceField(exp));
-            }
-            // Rebuild Project lists
-            if (Array.isArray(state.projects)) {
-                state.projects.forEach(proj => addProjectField(proj));
-            }
-            // Rebuild Education lists
-            if (Array.isArray(state.education)) {
-                state.education.forEach(edu => addEducationField(edu));
-            }
+            runBulk(() => {
+                validItems(state.skills).forEach(sk => addSkillField(sk.name ? String(sk.name) : ''));
+                validItems(state.languages).forEach(lg => addLanguageField(lg.name ? String(lg.name) : '', lg.level));
+                validItems(state.experience).forEach(exp => addExperienceField(exp));
+                validItems(state.projects).forEach(proj => addProjectField(proj));
+                validItems(state.education).forEach(edu => addEducationField(edu));
+            });
 
             // Restore toggles state
             if (state.toggles) {
