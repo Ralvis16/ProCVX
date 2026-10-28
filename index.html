@@ -14,17 +14,13 @@
     <meta property="og:title" content="ProCVX // Creador de Currículum Profesional - Free Resume Builder">
     <meta property="og:description" content="Diseña un CV impactante en minutos. Design a stunning resume in minutes. Sin registros, privado y listo para exportar a PDF. No sign-up, private and PDF-ready.">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://procvx.app/">
     
     <!-- Idioma Dinámico: Definido en Javascript -->
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Fuentes y librerías alojadas en el propio sitio (sin peticiones a terceros) -->
+    <link rel="stylesheet" href="fonts/fonts.css?v=1">
+    <script src="vendor/lucide.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=12">
 </head>
 <body class="theme-sapphire">
     <!-- App Container -->
@@ -387,9 +383,9 @@
                     <div class="footer-content">
                         <p>&copy; 2026 Raniell Alvis | ProCVX</p>
                         <div class="legal-links">
-                            <a href="#" onclick="openLegalModal('modal-aviso-legal')" data-i18n="footer_legal">Aviso Legal</a> | 
-                            <a href="#" onclick="openLegalModal('modal-privacidad')" data-i18n="footer_privacy">Política de Privacidad</a> | 
-                            <a href="#" onclick="openLegalModal('modal-storage')" data-i18n="footer_storage">Almacenamiento Local</a>
+                            <a href="#" onclick="openLegalModal('modal-aviso-legal'); return false;" data-i18n="footer_legal">Aviso Legal</a> | 
+                            <a href="#" onclick="openLegalModal('modal-privacidad'); return false;" data-i18n="footer_privacy">Política de Privacidad</a> | 
+                            <a href="#" onclick="openLegalModal('modal-storage'); return false;" data-i18n="footer_storage">Almacenamiento Local</a>
                         </div>
                     </div>
                 </footer>
@@ -427,7 +423,7 @@
                                     <i data-lucide="link"></i> <a href="#" target="_blank" id="preview-link" style="color: inherit; text-decoration: none;">github.com/usuario</a>
                                 </div>
                                 <div class="cv-contact-item" id="cv-contact-linkedin-container">
-                                    <i data-lucide="linkedin"></i> <a href="#" target="_blank" id="preview-linkedin" style="color: inherit; text-decoration: none;">linkedin.com/in/usuario</a>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-linkedin" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg> <a href="#" target="_blank" id="preview-linkedin" style="color: inherit; text-decoration: none;">linkedin.com/in/usuario</a>
                                 </div>
                                 </div>
                             </div>
@@ -442,9 +438,9 @@
                                 <!-- Soft Skills -->
                                 <section class="cv-section" id="cv-section-softskills">
                                     <h3 class="cv-section-title" id="preview-title-softskills-header"><i data-lucide="star"></i> <span>Habilidades</span></h3>
-                                    <p id="preview-softskills-desc" class="cv-text-block" style="white-space: pre-line; padding-left: 5px;">
+                                    <div id="preview-softskills-desc" class="cv-text-block" style="padding-left: 5px;">
                                         <!-- Soft skills description -->
-                                    </p>
+                                    </div>
                                 </section>
 
                                 <!-- Technical Skills -->
@@ -559,9 +555,11 @@
                 <p><strong>1. Procesamiento de Datos Personales</strong><br>
                 Toda la información ingresada por el usuario (nombres, teléfonos, correos electrónicos, historial laboral y fotografías) es procesada <strong>exclusivamente en el navegador web local</strong> del dispositivo.</p>
                 <p><strong>2. Generación del Documento</strong><br>
-                La generación del archivo PDF se realiza localmente utilizando librerías de cliente (Javascript). Ningún documento final ni dato intermediario viaja por internet hacia los creadores de esta página ni hacia terceros.</p>
+                La generación del archivo PDF se realiza localmente mediante la función de impresión de tu propio navegador. Ningún documento final ni dato intermediario viaja por internet hacia los creadores de esta página ni hacia terceros.</p>
                 <p><strong>3. Responsabilidad del Usuario</strong><br>
                 Al ser una aplicación 100% del lado del cliente, es responsabilidad exclusiva del usuario proteger la información generada o descargada en su propio dispositivo.</p>
+                <p><strong>4. Recursos de Terceros</strong><br>
+                Las librerías, los iconos y las tipografías se alojan en el propio sitio, por lo que la aplicación no carga recursos desde servidores de terceros.</p>
             </div>
         </div>
     </div>
@@ -587,8 +585,8 @@
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-    <script src="script.js?v=13"></script>
+    <script src="vendor/Sortable.min.js"></script>
+    <script src="script.js?v=15"></script>
     
     <!-- SEO Text (Visually Hidden) -->
     <div style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">
