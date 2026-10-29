@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ph_edu_school: "Ej. I.E.S. Tecnológico",
             lbl_edu_dates: "Periodo (Fechas)",
             ph_edu_dates: "Ej. 2024 - 2026",
-            lbl_skill_name: "Habilidad / Tecnología",
+            lbl_skill_name: "Habilidad / Tecnología (Separadas por comas)",
             ph_skill_name: "Ej. Liderazgo, React, Excel",
             lbl_lang_name: "Idioma",
             ph_lang_name: "Ej. Inglés",
@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ph_edu_school: "e.g. Technology Institute",
             lbl_edu_dates: "Period (Dates)",
             ph_edu_dates: "e.g. 2024 - 2026",
-            lbl_skill_name: "Skill / Technology",
+            lbl_skill_name: "Skill / Technology (Comma separated)",
             ph_skill_name: "e.g. Leadership, React, Excel",
             lbl_lang_name: "Language",
             ph_lang_name: "e.g. English",
@@ -631,14 +631,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Add Skill Form Group
     function addSkillField(name = '') {
-        const id = `skill-${skillIdCounter++}`;
-        const innerHtml = `
-                <div class="form-group">
-                    <label data-i18n="lbl_skill_name">Habilidad / Tecnología</label>
-                    <input type="text" class="skill-name" data-i18n="ph_skill_name" value="${escapeHtml(name)}" placeholder="Ej. Liderazgo, React, Excel">
-                </div>
+        skillsList.innerHTML = `
+            <div class="form-group">
+                <label data-i18n="lbl_skill_name">Habilidad / Tecnología (Separadas por comas)</label>
+                <input type="text" id="input-skills" class="skill-name" data-i18n="ph_skill_name" value="${escapeHtml(name)}" placeholder="Ej. Liderazgo, React, Excel">
+            </div>
         `;
-        appendDynamicField(skillsList, id, innerHtml);
         if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
@@ -940,10 +938,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateSkillsPreview() {
-        const skillsItems = skillsList.querySelectorAll('.dynamic-item');
+        const skillsInput = skillsList.querySelector('.skill-name');
+        const skillNames = skillsInput ? skillsInput.value.split(',').map(name => name.trim()).filter(Boolean) : [];
         const skillsSection = document.getElementById('cv-section-skills');
         
-        if (skillsItems.length === 0) {
+        if (skillNames.length === 0) {
             skillsSection.style.display = 'none';
         } else {
             skillsSection.style.display = 'flex';
@@ -952,13 +951,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const tagsContainer = document.createElement('div');
                 tagsContainer.className = 'cv-tags';
                 
-                skillsItems.forEach(item => {
-                    const name = item.querySelector('.skill-name').value;
-                    
-                    if (name) {
-                        const skillHtml = `<span class="cv-tag">${escapeHtml(name)}</span>`;
-                        tagsContainer.insertAdjacentHTML('beforeend', skillHtml);
-                    }
+                skillNames.forEach(name => {
+                    const skillHtml = `<span class="cv-tag">${escapeHtml(name)}</span>`;
+                    tagsContainer.insertAdjacentHTML('beforeend', skillHtml);
                 });
                 previewSkillsDynamic.appendChild(tagsContainer);
             }
@@ -1379,11 +1374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addLanguageField('English', 'Advanced');
             addLanguageField('French', 'Intermediate');
             
-            addSkillField('Agile Management');
-            addSkillField('Leadership');
-            addSkillField('Advanced Microsoft Excel');
-            addSkillField('Negotiation');
-            addSkillField('Python');
+            addSkillField('Agile Management, Leadership, Advanced Microsoft Excel, Negotiation, Python');
             
             addExperienceField({
                 role: 'Senior Project Manager',
@@ -1478,11 +1469,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addLanguageField('Inglés', 'Avanzado');
             addLanguageField('Francés', 'Intermedio');
             
-            addSkillField('Gestión Ágil');
-            addSkillField('Liderazgo');
-            addSkillField('Microsoft Excel Avanzado');
-            addSkillField('Negociación');
-            addSkillField('Python');
+            addSkillField('Gestión Ágil, Liderazgo, Microsoft Excel Avanzado, Negociación, Python');
             addExperienceField({
                 role: 'Gestor de Proyectos Senior',
                 company: 'Innovación Global S.A.',
@@ -1706,9 +1693,7 @@ document.addEventListener('DOMContentLoaded', () => {
             link: inputLink.value,
             linkedin: inputLinkedin.value,
             summary: inputSummary.value,
-            skills: Array.from(skillsList.querySelectorAll('.dynamic-item')).map(item => ({
-                name: item.querySelector('.skill-name').value
-            })),
+            skills: [{ name: skillsList.querySelector('.skill-name')?.value || '' }],
             titles: {
                 profile: inputTitleProfile.value,
                 experience: inputTitleExperience.value,
@@ -1963,7 +1948,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const validItems = list => Array.isArray(list) ? list.filter(item => item && typeof item === 'object') : [];
 
             runBulk(() => {
-                validItems(state.skills).forEach(sk => addSkillField(sk.name ? String(sk.name) : ''));
+                const savedSkills = validItems(state.skills);
+                const skillsValue = savedSkills.map(sk => sk.name ? String(sk.name) : '').filter(Boolean).join(', ');
+                addSkillField(skillsValue);
                 validItems(state.languages).forEach(lg => addLanguageField(lg.name ? String(lg.name) : '', lg.level));
                 validItems(state.experience).forEach(exp => addExperienceField(exp));
                 validItems(state.projects).forEach(proj => addProjectField(proj));
