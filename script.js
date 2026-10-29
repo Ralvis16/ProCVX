@@ -29,7 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn_add_project: "Añadir Proyecto",
             btn_add_experience: "Añadir Experiencia",
             btn_add_education: "Añadir Educación",
-            btn_add_skill: "Añadir Tecnología",
             btn_add_language: "Añadir Idioma",
             lbl_photo: "Fotografía de Perfil (Opcional)",
             lbl_fullname: "Nombre Completo",
@@ -185,7 +184,6 @@ document.addEventListener('DOMContentLoaded', () => {
             btn_add_project: "Add Project",
             btn_add_experience: "Add Experience",
             btn_add_education: "Add Education",
-            btn_add_skill: "Add Technology",
             btn_add_language: "Add Language",
             lbl_photo: "Profile Photo (Optional)",
             lbl_fullname: "Full Name",
@@ -425,7 +423,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewPhoto = document.getElementById('preview-photo');
     let currentPhoto = null;
 
-    // Dynamic Lists containers in Editor
+    // Dynamic list containers in Editor
     const experienceList = document.getElementById('experience-list');
     const projectsList = document.getElementById('projects-list');
     const educationList = document.getElementById('education-list');
@@ -512,7 +510,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let expIdCounter = 0;
     let projIdCounter = 0;
     let eduIdCounter = 0;
-    let skillIdCounter = 0;
     let langIdCounter = 0;
 
     // ----------------------------------------------------
@@ -628,8 +625,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bulkDepth === 0) updateLanguage(localStorage.getItem('procvx_lang') || 'es');
     }
 
-    // Add Skill Form Group
-    function addSkillField(name = '') {
+    // Set the single comma-separated skills field
+    function setSkillsField(name = '') {
         skillsList.innerHTML = `
             <div class="form-group">
                 <label data-i18n="lbl_skill_name">Habilidad / Tecnología (Separadas por comas)</label>
@@ -1367,7 +1364,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addLanguageField('English', 'Advanced');
             addLanguageField('French', 'Intermediate');
             
-            addSkillField('Agile Management, Leadership, Advanced Microsoft Excel, Negotiation, Python');
+            setSkillsField('Agile Management, Leadership, Advanced Microsoft Excel, Negotiation, Python');
             
             addExperienceField({
                 role: 'Senior Project Manager',
@@ -1462,7 +1459,7 @@ document.addEventListener('DOMContentLoaded', () => {
             addLanguageField('Inglés', 'Avanzado');
             addLanguageField('Francés', 'Intermedio');
             
-            addSkillField('Gestión Ágil, Liderazgo, Microsoft Excel Avanzado, Negociación, Python');
+            setSkillsField('Gestión Ágil, Liderazgo, Microsoft Excel Avanzado, Negociación, Python');
             addExperienceField({
                 role: 'Gestor de Proyectos Senior',
                 company: 'Innovación Global S.A.',
@@ -1943,7 +1940,7 @@ document.addEventListener('DOMContentLoaded', () => {
             runBulk(() => {
                 const savedSkills = validItems(state.skills);
                 const skillsValue = savedSkills.map(sk => sk.name ? String(sk.name) : '').filter(Boolean).join(', ');
-                addSkillField(skillsValue);
+                setSkillsField(skillsValue);
                 validItems(state.languages).forEach(lg => addLanguageField(lg.name ? String(lg.name) : '', lg.level));
                 validItems(state.experience).forEach(exp => addExperienceField(exp));
                 validItems(state.projects).forEach(proj => addProjectField(proj));
