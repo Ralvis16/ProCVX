@@ -38,7 +38,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 
 ## 🏗️ Arquitectura y Clean Code
 
-*   **Modularidad en JS:** La lógica de renderizado (`updatePreview`) está dividida en submódulos por sección del currículum.
+*   **Modularidad en JS:** `script.js` coordina la aplicación y delega persistencia, utilidades de texto e integración visual en módulos independientes.
 *   **Factory Pattern:** Los bloques dinámicos del editor (experiencias, idiomas, etc.) se crean con funciones de fábrica.
 *   **Seguridad:** Todo texto del usuario se escapa antes de insertarse en el HTML (también al importar un JSON).
 *   **Carga en bloque:** Al cargar muchos elementos (ejemplo o datos guardados) la interfaz se refresca una sola vez.
@@ -79,11 +79,16 @@ Instala la extensión **Live Server** y pulsa **Go Live** en la barra inferior.
 ProCVX/
 ├── index.html          # Estructura (paneles de editor y vista previa)
 ├── style.css           # Estilos, temas, plantillas y reglas de impresión
-├── script.js           # Lógica: renderizado, formularios dinámicos, i18n, localStorage
+├── script.js           # Coordinación, renderizado, formularios dinámicos e i18n
+├── storage.js          # Persistencia segura y análisis de JSON
+├── utils.js            # Utilidades de texto y niveles de idiomas
+├── ui.js               # Integración segura con Lucide
+├── i18n.js              # Diccionario de traducciones ES / EN
+├── config.js            # Configuración global y claves de almacenamiento
 ├── fonts/              # Tipografías alojadas (fonts.css + files/*.woff2) y licencias
 ├── vendor/             # Lucide y SortableJS alojados, con sus licencias
 ├── LICENSE
 └── README.md
 ```
 
-> Al actualizar `style.css` o `script.js`, sube también el número `?v=` de su etiqueta en `index.html` para que el navegador no use la copia en caché.
+> Al actualizar `style.css` o cualquier archivo JavaScript, sube también el número `?v=` de sus etiquetas en `index.html` para que el navegador no use copias antiguas en caché.
