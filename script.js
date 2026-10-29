@@ -394,7 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputSummary = document.getElementById('input-summary');
 
     const skillsList = document.getElementById('skills-list');
-    const btnAddSkill = document.getElementById('btn-add-skill');
     const previewSkillsDynamic = document.getElementById('preview-skills-dynamic');
     
     const languagesList = document.getElementById('languages-list');
@@ -1082,12 +1081,6 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAddExperience.addEventListener('click', () => addExperienceField());
     btnAddProject.addEventListener('click', () => addProjectField());
     btnAddEducation.addEventListener('click', () => addEducationField());
-    if(btnAddSkill) {
-        btnAddSkill.addEventListener('click', () => {
-            addSkillField();
-        });
-    }
-
     if(btnAddLanguage) {
         btnAddLanguage.addEventListener('click', () => {
             addLanguageField();
