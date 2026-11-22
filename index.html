@@ -6,28 +6,43 @@
     <title>ProCVX // Creador de Currículum Profesional</title>
     
     <!-- SEO Meta Tags -->
-    <meta name="description" content="Crea tu currículum vitae profesional gratis / Create your professional resume online for free. Plantillas premium, privado y exportación a PDF / Premium templates, private & PDF export.">
+    <meta name="description" content="Crea gratis tu currículum profesional en minutos: plantillas modernas, vista previa en tiempo real y exportación a PDF. Sin registro y 100 % privado.">
     <meta name="keywords" content="creador de curriculum, hacer cv gratis, resume builder, free resume maker, plantillas de curriculum, resume templates, cv profesional, exportar cv a pdf, export resume to pdf">
     <meta name="author" content="ProCVX">
 
     <!-- Open Graph / Redes Sociales -->
-    <meta property="og:title" content="ProCVX // Creador de Currículum Profesional - Free Resume Builder">
-    <meta property="og:description" content="Diseña un CV impactante en minutos. Design a stunning resume in minutes. Sin registros, privado y listo para exportar a PDF. No sign-up, private and PDF-ready.">
+    <meta property="og:title" content="ProCVX // Creador de Currículum Profesional">
+    <meta property="og:description" content="Diseña un CV impactante en minutos. Sin registro, privado y listo para exportar a PDF.">
     <meta property="og:type" content="website">
+    <meta property="og:locale" content="es_ES">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:url" content="https://ralvis16.github.io/ProCVX/">
+    <meta property="og:image" content="https://ralvis16.github.io/ProCVX/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ProCVX // Creador de Currículum Profesional">
+    <meta name="twitter:description" content="Diseña un CV impactante en minutos. Sin registro, privado y listo para exportar a PDF.">
+    <meta name="twitter:image" content="https://ralvis16.github.io/ProCVX/og-image.png">
+    <meta name="theme-color" content="#090d16">
+    <link rel="canonical" href="https://ralvis16.github.io/ProCVX/">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="manifest" href="manifest.webmanifest">
     
     <!-- Idioma Dinámico: Definido en Javascript -->
     <!-- Fuentes y librerías alojadas en el propio sitio (sin peticiones a terceros) -->
-    <link rel="stylesheet" href="fonts/fonts.css?v=1">
+    <link rel="stylesheet" href="fonts/fonts.css?v=19">
     <script src="vendor/lucide.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=19">
 </head>
 <body class="theme-sapphire">
     <!-- App Container -->
     <div class="app-container">
         <!-- Control Header -->
         <header class="app-header no-print">
-            <div class="header-logo" style="cursor: pointer;" onclick="window.location.reload();" title="Recargar aplicación">
+            <div class="header-logo">
                 <div class="logo-icon"><i data-lucide="briefcase"></i></div>
                 <div class="logo-text">
                     <h1>Pro<span>CVX</span></h1>
@@ -38,42 +53,44 @@
                 <div class="header-selectors">
                     <!-- Theme Switcher -->
                     <div class="theme-selector custom-dropdown" id="theme-dropdown-container">
-                        <span class="selector-label" data-i18n="theme_label">Tema:</span>
-                        <div class="dropdown-header" id="theme-dropdown-header">
-                            <div class="theme-btn btn-sapphire active" style="pointer-events: none; width: 16px; height: 16px;" id="theme-selected-icon"></div>
+                        <span class="selector-label" id="theme-label" data-i18n="theme_label">Tema:</span>
+                        <button type="button" class="dropdown-header" id="theme-dropdown-header" aria-haspopup="listbox" aria-expanded="false" aria-controls="theme-dropdown-menu" aria-labelledby="theme-label theme-current-name">
+                            <span class="theme-btn theme-swatch btn-sapphire active" id="theme-selected-icon"></span>
+                            <span class="visually-hidden" id="theme-current-name">Sapphire</span>
                             <i data-lucide="chevron-down" class="dropdown-icon"></i>
-                        </div>
-                        <ul class="dropdown-menu" id="theme-dropdown-menu">
-                            <li class="dropdown-item active" data-theme="sapphire">
-                                <div class="theme-btn btn-sapphire" style="pointer-events: none; width: 16px; height: 16px;"></div> <span data-i18n="theme_sapphire">Sapphire</span>
+                        </button>
+                        <ul class="dropdown-menu" id="theme-dropdown-menu" role="listbox" aria-labelledby="theme-label">
+                            <li class="dropdown-item active" data-theme="sapphire" role="option" tabindex="-1" aria-selected="true">
+                                <span class="theme-btn theme-swatch btn-sapphire"></span> <span data-i18n="theme_sapphire">Sapphire</span>
                             </li>
-                            <li class="dropdown-item" data-theme="cyberpunk">
-                                <div class="theme-btn btn-cyberpunk" style="pointer-events: none; width: 16px; height: 16px;"></div> <span data-i18n="theme_cyberpunk">Cyberpunk</span>
+                            <li class="dropdown-item" data-theme="cyberpunk" role="option" tabindex="-1" aria-selected="false">
+                                <span class="theme-btn theme-swatch btn-cyberpunk"></span> <span data-i18n="theme_cyberpunk">Cyberpunk</span>
                             </li>
-                            <li class="dropdown-item" data-theme="emerald">
-                                <div class="theme-btn btn-emerald" style="pointer-events: none; width: 16px; height: 16px;"></div> <span data-i18n="theme_emerald">Emerald</span>
+                            <li class="dropdown-item" data-theme="emerald" role="option" tabindex="-1" aria-selected="false">
+                                <span class="theme-btn theme-swatch btn-emerald"></span> <span data-i18n="theme_emerald">Emerald</span>
                             </li>
-                            <li class="dropdown-item" data-theme="nordic">
-                                <div class="theme-btn btn-nordic" style="pointer-events: none; width: 16px; height: 16px;"></div> <span data-i18n="theme_nordic">Nordic</span>
+                            <li class="dropdown-item" data-theme="nordic" role="option" tabindex="-1" aria-selected="false">
+                                <span class="theme-btn theme-swatch btn-nordic"></span> <span data-i18n="theme_nordic">Nordic</span>
                             </li>
                         </ul>
                     </div>
                     
                     <!-- Template Switcher -->
                     <div class="template-selector custom-dropdown" id="template-dropdown-container">
-                        <span class="selector-label" data-i18n="structure_label">Estructura:</span>
-                        <div class="dropdown-header" id="template-dropdown-header">
-                            <span class="selected-text" id="template-selected-text" style="display:flex; align-items:center; gap:0.5rem;"><i data-lucide="columns"></i></span>
+                        <span class="selector-label" id="template-label" data-i18n="structure_label">Estructura:</span>
+                        <button type="button" class="dropdown-header" id="template-dropdown-header" aria-haspopup="listbox" aria-expanded="false" aria-controls="template-dropdown-menu" aria-labelledby="template-label template-current-name">
+                            <span class="selected-text selected-icon" id="template-selected-text"><i data-lucide="columns"></i></span>
+                            <span class="visually-hidden" id="template-current-name">Moderno</span>
                             <i data-lucide="chevron-down" class="dropdown-icon"></i>
-                        </div>
-                        <ul class="dropdown-menu" id="template-dropdown-menu">
-                            <li class="dropdown-item active" data-template="modern">
+                        </button>
+                        <ul class="dropdown-menu" id="template-dropdown-menu" role="listbox" aria-labelledby="template-label">
+                            <li class="dropdown-item active" data-template="modern" role="option" tabindex="-1" aria-selected="true">
                                 <i data-lucide="columns"></i> <span data-i18n="tmpl_modern">Modern</span>
                             </li>
-                            <li class="dropdown-item" data-template="minimal">
+                            <li class="dropdown-item" data-template="minimal" role="option" tabindex="-1" aria-selected="false">
                                 <i data-lucide="align-center"></i> <span data-i18n="tmpl_minimal">Minimal</span>
                             </li>
-                            <li class="dropdown-item" data-template="classic">
+                            <li class="dropdown-item" data-template="classic" role="option" tabindex="-1" aria-selected="false">
                                 <i data-lucide="layout-list"></i> <span data-i18n="tmpl_classic">Classic</span>
                             </li>
                         </ul>
@@ -81,14 +98,14 @@
 
                     <!-- Language Switcher -->
                     <div class="lang-selector custom-dropdown" id="lang-dropdown-container">
-                        <span class="selector-label" data-i18n="lang_label">Idioma:</span>
-                        <div class="dropdown-header" id="lang-dropdown-header">
+                        <span class="selector-label" id="lang-label" data-i18n="lang_label">Idioma:</span>
+                        <button type="button" class="dropdown-header" id="lang-dropdown-header" aria-haspopup="listbox" aria-expanded="false" aria-controls="lang-dropdown-menu" aria-labelledby="lang-label lang-selected-text">
                             <span class="selected-text" id="lang-selected-text">🇪🇸 ES</span>
                             <i data-lucide="chevron-down" class="dropdown-icon"></i>
-                        </div>
-                        <ul class="dropdown-menu" id="lang-dropdown-menu">
-                            <li class="dropdown-item active" data-lang="es">🇪🇸 ES</li>
-                            <li class="dropdown-item" data-lang="en">🇺🇸 EN</li>
+                        </button>
+                        <ul class="dropdown-menu" id="lang-dropdown-menu" role="listbox" aria-labelledby="lang-label">
+                            <li class="dropdown-item active" data-lang="es" role="option" tabindex="-1" aria-selected="true">🇪🇸 ES</li>
+                            <li class="dropdown-item" data-lang="en" role="option" tabindex="-1" aria-selected="false">🇺🇸 EN</li>
                         </ul>
                     </div>
                 </div>
@@ -97,7 +114,7 @@
                     <button id="btn-import-json" class="btn btn-secondary" data-i18n-title="tt_import" title="Importar CV desde archivo JSON">
                         <i data-lucide="upload"></i> <span data-i18n="btn_import">Cargar Datos</span>
                     </button>
-                    <input type="file" id="input-json-file" accept=".json" style="display: none;">
+                    <input type="file" id="input-json-file" accept=".json,application/json" hidden>
                     <button id="btn-export-json" class="btn btn-secondary" data-i18n-title="tt_export" title="Exportar CV a archivo JSON">
                         <i data-lucide="download"></i> <span data-i18n="btn_export">Guardar Datos</span>
                     </button>
@@ -122,6 +139,12 @@
                     <div class="editor-header-sticky">
                         <h2><i data-lucide="edit-3"></i> <span data-i18n="editor_title">Editor de Datos</span></h2>
                         <span class="helper-text" data-i18n="editor_subtitle">Rellena los campos y mira la vista previa en tiempo real.</span>
+                        <div class="completeness" id="cv-completeness">
+                            <div class="completeness-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-labelledby="completeness-text" id="completeness-bar">
+                                <span class="completeness-fill" id="completeness-fill"></span>
+                            </div>
+                            <p class="completeness-text" id="completeness-text"></p>
+                        </div>
                     </div>
 
                     <!-- Accordion Form -->
@@ -134,11 +157,11 @@
                                 <i data-lucide="chevron-down" class="chevron"></i>
                             </summary>
                             <div class="accordion-content grid-2">
-                                <div class="form-group" style="grid-column: 1 / -1;">
-                                    <label data-i18n="lbl_photo">Fotografía de Perfil (Opcional)</label>
-                                    <div style="display: flex; gap: 10px; align-items: center;">
-                                        <input type="file" id="input-photo" accept="image/*" style="flex: 1;">
-                                        <button id="btn-remove-photo" class="btn btn-secondary danger" style="padding: 0.5rem; display: none;" data-i18n-title="tt_remove_photo" title="Eliminar Foto"><i data-lucide="trash-2"></i></button>
+                                <div class="form-group form-group-full">
+                                    <label for="input-photo" data-i18n="lbl_photo">Fotografía de Perfil (Opcional)</label>
+                                    <div class="photo-row">
+                                        <input type="file" id="input-photo" accept="image/*">
+                                        <button type="button" id="btn-remove-photo" class="btn btn-secondary danger btn-icon-only" hidden data-i18n-title="tt_remove_photo" data-i18n-aria="tt_remove_photo" title="Eliminar Foto" aria-label="Eliminar Foto"><i data-lucide="trash-2"></i></button>
                                     </div>
                                 </div>
                                 <div class="form-group">
@@ -180,7 +203,7 @@
                         <details class="accordion-item" data-fixed="true">
                             <summary class="accordion-trigger">
                                 <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-summary" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-summary" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
                                     <i data-lucide="file-text"></i> <span data-i18n="sec_profile">Perfil Profesional (Sobre mí)</span>
                                 </span>
                                 <i data-lucide="chevron-down" class="chevron"></i>
@@ -197,48 +220,18 @@
                             </div>
                         </details>
 
-                        <!-- 3. Proyectos Destacados -->
+                        <!-- 3. Experiencia Laboral -->
                         <details class="accordion-item">
                             <summary class="accordion-trigger">
                                 <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-projects" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="folder-git-2"></i> <span data-i18n="sec_projects">Proyectos</span>
-                                </span>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="section-controls" onclick="event.preventDefault();">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button class="btn-section-up" data-i18n-title="tt_move_up" title="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button class="btn-section-down" data-i18n-title="tt_move_down" title="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
-                                    <i data-lucide="chevron-down" class="chevron"></i>
-                                </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-projects" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-projects" data-i18n="ph_sec_projects" value="Proyectos" placeholder="Ej. Portafolio, Casos de Estudio...">
-                                </div>
-                                <div id="projects-list" class="dynamic-list">
-                                    <!-- Dynamic items will be added here -->
-                                </div>
-                                <button type="button" id="btn-add-project" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_project">Añadir Proyecto</span>
-                                </button>
-                            </div>
-                        </details>
-
-                        <!-- 4. Experiencia Laboral -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-experience" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-experience" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
                                     <i data-lucide="briefcase"></i> <span data-i18n="sec_experience">Experiencia Laboral</span>
                                 </span>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="section-controls" onclick="event.preventDefault();">
+                                <div class="summary-actions">
+                                    <div class="section-controls">
                                         <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button class="btn-section-up" data-i18n-title="tt_move_up" title="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button class="btn-section-down" data-i18n-title="tt_move_down" title="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                                     </div>
                                     <i data-lucide="chevron-down" class="chevron"></i>
                                 </div>
@@ -257,18 +250,78 @@
                             </div>
                         </details>
 
+                        <!-- 4. Proyectos Destacados -->
+                        <details class="accordion-item">
+                            <summary class="accordion-trigger">
+                                <span>
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-projects" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <i data-lucide="folder-git-2"></i> <span data-i18n="sec_projects">Proyectos</span>
+                                </span>
+                                <div class="summary-actions">
+                                    <div class="section-controls">
+                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="chevron"></i>
+                                </div>
+                            </summary>
+                            <div class="accordion-content">
+                                <div class="form-group">
+                                    <label for="input-title-projects" data-i18n="lbl_sec_title">Título de la sección</label>
+                                    <input type="text" id="input-title-projects" data-i18n="ph_sec_projects" value="Proyectos" placeholder="Ej. Portafolio, Casos de Estudio...">
+                                </div>
+                                <div id="projects-list" class="dynamic-list">
+                                    <!-- Dynamic items will be added here -->
+                                </div>
+                                <button type="button" id="btn-add-project" class="btn btn-outline btn-sm">
+                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_project">Añadir Proyecto</span>
+                                </button>
+                            </div>
+                        </details>
+
+                        <!-- 4.5. Voluntariado -->
+                        <details class="accordion-item">
+                            <summary class="accordion-trigger">
+                                <span>
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-volunteer" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <i data-lucide="heart-handshake"></i> <span data-i18n="sec_volunteer">Voluntariado</span>
+                                </span>
+                                <div class="summary-actions">
+                                    <div class="section-controls">
+                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="chevron"></i>
+                                </div>
+                            </summary>
+                            <div class="accordion-content">
+                                <div class="form-group">
+                                    <label for="input-title-volunteer" data-i18n="lbl_sec_title">Título de la sección</label>
+                                    <input type="text" id="input-title-volunteer" data-i18n="ph_sec_volunteer" value="Voluntariado" placeholder="Ej. Voluntariado, Acción Social...">
+                                </div>
+                                <div id="volunteer-list" class="dynamic-list">
+                                    <!-- Dynamic items will be added here -->
+                                </div>
+                                <button type="button" id="btn-add-volunteer" class="btn btn-outline btn-sm">
+                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_volunteer">Añadir Voluntariado</span>
+                                </button>
+                            </div>
+                        </details>
+
                         <!-- 5. Educación -->
                         <details class="accordion-item">
                             <summary class="accordion-trigger">
                                 <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-education" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-education" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
                                     <i data-lucide="graduation-cap"></i> <span data-i18n="sec_education">Educación</span>
                                 </span>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="section-controls" onclick="event.preventDefault();">
+                                <div class="summary-actions">
+                                    <div class="section-controls">
                                         <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button class="btn-section-up" data-i18n-title="tt_move_up" title="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button class="btn-section-down" data-i18n-title="tt_move_down" title="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                                     </div>
                                     <i data-lucide="chevron-down" class="chevron"></i>
                                 </div>
@@ -282,7 +335,37 @@
                                     <!-- Dynamic items will be added here -->
                                 </div>
                                 <button type="button" id="btn-add-education" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_education">Añadir Educación</span>
+                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_education">Añadir Formación</span>
+                                </button>
+                            </div>
+                        </details>
+
+                        <!-- 5.5. Certificaciones -->
+                        <details class="accordion-item">
+                            <summary class="accordion-trigger">
+                                <span>
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-certifications" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <i data-lucide="award"></i> <span data-i18n="sec_certifications">Certificaciones</span>
+                                </span>
+                                <div class="summary-actions">
+                                    <div class="section-controls">
+                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="chevron"></i>
+                                </div>
+                            </summary>
+                            <div class="accordion-content">
+                                <div class="form-group">
+                                    <label for="input-title-certifications" data-i18n="lbl_sec_title">Título de la sección</label>
+                                    <input type="text" id="input-title-certifications" data-i18n="ph_sec_certifications" value="Certificaciones" placeholder="Ej. Certificaciones, Cursos...">
+                                </div>
+                                <div id="certifications-list" class="dynamic-list">
+                                    <!-- Dynamic items will be added here -->
+                                </div>
+                                <button type="button" id="btn-add-certification" class="btn btn-outline btn-sm">
+                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_certification">Añadir Certificación</span>
                                 </button>
                             </div>
                         </details>
@@ -291,14 +374,14 @@
                         <details class="accordion-item">
                             <summary class="accordion-trigger">
                                 <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-softskills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-softskills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
                                     <i data-lucide="star"></i> <span data-i18n="sec_softskills">Habilidades</span>
                                 </span>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="section-controls" onclick="event.preventDefault();">
+                                <div class="summary-actions">
+                                    <div class="section-controls">
                                         <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button class="btn-section-up" data-i18n-title="tt_move_up" title="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button class="btn-section-down" data-i18n-title="tt_move_down" title="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                                     </div>
                                     <i data-lucide="chevron-down" class="chevron"></i>
                                 </div>
@@ -319,14 +402,14 @@
                         <details class="accordion-item">
                             <summary class="accordion-trigger">
                                 <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-skills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-skills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
                                     <i data-lucide="terminal"></i> <span data-i18n="sec_tech">Tecnología</span>
                                 </span>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="section-controls" onclick="event.preventDefault();">
+                                <div class="summary-actions">
+                                    <div class="section-controls">
                                         <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button class="btn-section-up" data-i18n-title="tt_move_up" title="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button class="btn-section-down" data-i18n-title="tt_move_down" title="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                                     </div>
                                     <i data-lucide="chevron-down" class="chevron"></i>
                                 </div>
@@ -346,14 +429,14 @@
                         <details class="accordion-item">
                             <summary class="accordion-trigger">
                                 <span>
-                                    <input type="checkbox" class="section-toggle" checked data-section="cv-section-languages" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-languages" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
                                     <i data-lucide="languages"></i> <span data-i18n="sec_languages">Idiomas</span>
                                 </span>
-                                <div style="display: flex; align-items: center; gap: 8px;">
-                                    <div class="section-controls" onclick="event.preventDefault();">
+                                <div class="summary-actions">
+                                    <div class="section-controls">
                                         <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button class="btn-section-up" data-i18n-title="tt_move_up" title="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button class="btn-section-down" data-i18n-title="tt_move_down" title="Bajar sección"><i data-lucide="arrow-down"></i></button>
+                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                                     </div>
                                     <i data-lucide="chevron-down" class="chevron"></i>
                                 </div>
@@ -380,9 +463,9 @@
                     <div class="footer-content">
                         <p>&copy; 2026 Raniell Alvis | ProCVX</p>
                         <div class="legal-links">
-                            <a href="#" onclick="openLegalModal('modal-aviso-legal'); return false;" data-i18n="footer_legal">Aviso Legal</a> | 
-                            <a href="#" onclick="openLegalModal('modal-privacidad'); return false;" data-i18n="footer_privacy">Política de Privacidad</a> | 
-                            <a href="#" onclick="openLegalModal('modal-storage'); return false;" data-i18n="footer_storage">Almacenamiento Local</a>
+                            <button type="button" class="link-button" data-open-modal="modal-aviso-legal" data-i18n="footer_legal">Aviso Legal</button> | 
+                            <button type="button" class="link-button" data-open-modal="modal-privacidad" data-i18n="footer_privacy">Política de Privacidad</button> | 
+                            <button type="button" class="link-button" data-open-modal="modal-storage" data-i18n="footer_storage">Almacenamiento Local</button>
                         </div>
                     </div>
                 </footer>
@@ -396,7 +479,7 @@
                         
                         <!-- CV Top Accent Header Block -->
                         <header class="cv-header">
-                            <img id="preview-photo" src="" alt="Foto" style="display: none;" class="cv-profile-photo">
+                            <img id="preview-photo" alt="" hidden class="cv-profile-photo">
                             <div class="cv-header-content">
                                 <div class="cv-header-left">
                                     <h1 id="preview-fullname">Nombre Apellido</h1>
@@ -405,22 +488,22 @@
                             <div class="cv-header-right">
                                 <!-- Quick Metadata Info -->
                                 <div class="cv-contact-item" id="cv-contact-email-container">
-                                    <i data-lucide="mail"></i> <a href="#" id="preview-email" style="color: inherit; text-decoration: none;">correo@dev.com</a>
+                                    <i data-lucide="mail"></i> <a href="#" id="preview-email">correo@dev.com</a>
                                 </div>
                                 <div class="cv-contact-item" id="cv-contact-phone-container">
-                                    <i data-lucide="phone"></i> <a href="#" id="preview-phone" style="color: inherit; text-decoration: none;">+34 000 000 000</a>
+                                    <i data-lucide="phone"></i> <a href="#" id="preview-phone">+34 000 000 000</a>
                                 </div>
                                 <div class="cv-contact-item" id="cv-contact-location-container">
                                     <i data-lucide="map-pin"></i> <span id="preview-location">Ciudad, País</span>
                                 </div>
                                 <div class="cv-contact-item" id="cv-contact-website-container">
-                                    <i data-lucide="globe"></i> <a href="#" target="_blank" id="preview-website" style="color: inherit; text-decoration: none;">miweb.dev</a>
+                                    <i data-lucide="globe"></i> <a href="#" target="_blank" rel="noopener noreferrer" id="preview-website">miweb.dev</a>
                                 </div>
                                 <div class="cv-contact-item" id="cv-contact-link-container">
-                                    <i data-lucide="link"></i> <a href="#" target="_blank" id="preview-link" style="color: inherit; text-decoration: none;">github.com/usuario</a>
+                                    <i data-lucide="link"></i> <a href="#" target="_blank" rel="noopener noreferrer" id="preview-link">github.com/usuario</a>
                                 </div>
                                 <div class="cv-contact-item" id="cv-contact-linkedin-container">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-linkedin" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg> <a href="#" target="_blank" id="preview-linkedin" style="color: inherit; text-decoration: none;">linkedin.com/in/usuario</a>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-linkedin" aria-hidden="true"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect width="4" height="12" x="2" y="9"/><circle cx="4" cy="4" r="2"/></svg> <a href="#" target="_blank" rel="noopener noreferrer" id="preview-linkedin">linkedin.com/in/usuario</a>
                                 </div>
                                 </div>
                             </div>
@@ -435,7 +518,7 @@
                                 <!-- Soft Skills -->
                                 <section class="cv-section" id="cv-section-softskills">
                                     <h3 class="cv-section-title" id="preview-title-softskills-header"><i data-lucide="star"></i> <span>Habilidades</span></h3>
-                                    <div id="preview-softskills-desc" class="cv-text-block" style="padding-left: 5px;">
+                                    <div id="preview-softskills-desc" class="cv-text-block cv-softskills-block">
                                         <!-- Soft skills description -->
                                     </div>
                                 </section>
@@ -453,6 +536,14 @@
                                     <h3 class="cv-section-title" id="preview-title-education-header"><i data-lucide="graduation-cap"></i> <span>Formación</span></h3>
                                     <div id="preview-education" class="cv-list-block">
                                         <!-- Will be dynamically populated -->
+                                    </div>
+                                </section>
+
+                                <!-- Certifications -->
+                                <section class="cv-section" id="cv-section-certifications">
+                                    <h3 class="cv-section-title" id="preview-title-certifications-header"><i data-lucide="award"></i> <span>Certificaciones</span></h3>
+                                    <div id="preview-certifications" class="cv-list-block">
+                                        <!-- Dynamically filled -->
                                     </div>
                                 </section>
 
@@ -493,6 +584,14 @@
                                         <!-- Will be dynamically populated -->
                                     </div>
                                 </section>
+
+                                <!-- Volunteering -->
+                                <section class="cv-section" id="cv-section-volunteer">
+                                    <h3 class="cv-section-title" id="preview-title-volunteer-header"><i data-lucide="heart-handshake"></i> <span>Voluntariado</span></h3>
+                                    <div id="preview-volunteer" class="cv-list-block">
+                                        <!-- Dynamically filled -->
+                                    </div>
+                                </section>
                                 
                             </div>
 
@@ -504,18 +603,18 @@
     </div>
     
     <!-- Custom Confirmation Modal -->
-    <div id="confirm-modal" class="modal-overlay no-print">
-        <div class="modal-box">
+    <div id="confirm-modal" class="modal-overlay no-print" inert>
+        <div class="modal-box" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-title" aria-describedby="confirm-modal-body">
             <div class="modal-header">
                 <i data-lucide="alert-triangle" class="modal-icon-warning"></i>
-                <h3 data-i18n="modal_confirm_title">¿Confirmar acción?</h3>
+                <h3 id="confirm-modal-title" data-i18n="modal_confirm_title">¿Confirmar acción?</h3>
             </div>
             <div class="modal-body">
-                <p data-i18n="modal_confirm_body">¿Estás seguro de que deseas limpiar todos los campos del currículum? Se perderá todo el progreso actual y guardado.</p>
+                <p id="confirm-modal-body" data-i18n="modal_confirm_body">¿Estás seguro de que deseas limpiar todos los campos del currículum? Se perderá todo el progreso actual y guardado.</p>
             </div>
             <div class="modal-footer">
-                <button id="modal-btn-cancel" class="btn btn-secondary" data-i18n="modal_btn_cancel">Cancelar</button>
-                <button id="modal-btn-confirm" class="btn btn-primary danger" data-i18n="modal_btn_confirm">Sí, limpiar todo</button>
+                <button type="button" id="modal-btn-cancel" class="btn btn-secondary" data-i18n="modal_btn_cancel">Cancelar</button>
+                <button type="button" id="modal-btn-confirm" class="btn btn-primary danger" data-i18n="modal_btn_confirm">Sí, limpiar todo</button>
             </div>
         </div>
     </div>
@@ -523,11 +622,11 @@
 
 
     <!-- Legal Modals -->
-    <div id="modal-aviso-legal" class="modal-overlay no-print legal-modal">
-        <div class="modal-box legal-box">
+    <div id="modal-aviso-legal" class="modal-overlay no-print legal-modal" inert>
+        <div class="modal-box legal-box" role="dialog" aria-modal="true" aria-labelledby="modal-aviso-legal-title">
             <div class="modal-header">
-                <h3 style="margin:0; font-size: 1.2rem;" data-i18n="legal_title">Aviso Legal</h3>
-                <button class="btn-close-modal" onclick="closeLegalModal('modal-aviso-legal')"><i data-lucide="x"></i></button>
+                <h3 class="legal-title" id="modal-aviso-legal-title" data-i18n="legal_title">Aviso Legal</h3>
+                <button type="button" class="btn-close-modal" data-close-modal="modal-aviso-legal" data-i18n-aria="tt_close" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body legal-body" data-i18n-html="legal_body">
                 <p><strong>1. Datos Identificativos</strong><br>
@@ -540,11 +639,11 @@
         </div>
     </div>
 
-    <div id="modal-privacidad" class="modal-overlay no-print legal-modal">
-        <div class="modal-box legal-box">
+    <div id="modal-privacidad" class="modal-overlay no-print legal-modal" inert>
+        <div class="modal-box legal-box" role="dialog" aria-modal="true" aria-labelledby="modal-privacidad-title">
             <div class="modal-header">
-                <h3 style="margin:0; font-size: 1.2rem;" data-i18n="privacy_title">Política de Privacidad</h3>
-                <button class="btn-close-modal" onclick="closeLegalModal('modal-privacidad')"><i data-lucide="x"></i></button>
+                <h3 class="legal-title" id="modal-privacidad-title" data-i18n="privacy_title">Política de Privacidad</h3>
+                <button type="button" class="btn-close-modal" data-close-modal="modal-privacidad" data-i18n-aria="tt_close" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body legal-body" data-i18n-html="privacy_body">
                 <p><strong>Privacidad desde el Diseño (Client-Side Processing)</strong><br>
@@ -561,11 +660,11 @@
         </div>
     </div>
 
-    <div id="modal-storage" class="modal-overlay no-print legal-modal">
-        <div class="modal-box legal-box">
+    <div id="modal-storage" class="modal-overlay no-print legal-modal" inert>
+        <div class="modal-box legal-box" role="dialog" aria-modal="true" aria-labelledby="modal-storage-title">
             <div class="modal-header">
-                <h3 style="margin:0; font-size: 1.2rem;" data-i18n="storage_title">Almacenamiento Local y Cookies</h3>
-                <button class="btn-close-modal" onclick="closeLegalModal('modal-storage')"><i data-lucide="x"></i></button>
+                <h3 class="legal-title" id="modal-storage-title" data-i18n="storage_title">Almacenamiento Local y Cookies</h3>
+                <button type="button" class="btn-close-modal" data-close-modal="modal-storage" data-i18n-aria="tt_close" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
             <div class="modal-body legal-body" data-i18n-html="storage_body">
                 <p><strong>Ausencia de Cookies de Rastreo</strong><br>
@@ -581,17 +680,31 @@
         </div>
     </div>
 
+    <!-- Mobile: switch between editor and preview -->
+    <nav class="mobile-view-switch no-print" aria-label="Vista" data-i18n-aria="mobile_switch_label">
+        <button type="button" class="mobile-view-btn active" data-view="editor" aria-pressed="true">
+            <i data-lucide="edit-3"></i> <span data-i18n="mobile_edit">Editar</span>
+        </button>
+        <button type="button" class="mobile-view-btn" data-view="preview" aria-pressed="false">
+            <i data-lucide="eye"></i> <span data-i18n="mobile_preview">Vista previa</span>
+        </button>
+    </nav>
+
+    <!-- Toast notifications -->
+    <div class="toast-region no-print" id="toast-region" role="status" aria-live="polite"></div>
+
     <!-- Scripts -->
     <script src="vendor/Sortable.min.js"></script>
-    <script src="config.js?v=16"></script>
-    <script src="storage.js?v=16"></script>
-    <script src="utils.js?v=16"></script>
-    <script src="ui.js?v=16"></script>
-    <script src="i18n.js?v=16"></script>
-    <script src="script.js?v=16"></script>
+    <script src="config.js?v=19"></script>
+    <script src="storage.js?v=19"></script>
+    <script src="utils.js?v=19"></script>
+    <script src="ui.js?v=19"></script>
+    <script src="i18n.js?v=19"></script>
+    <script src="sample-data.js?v=19"></script>
+    <script src="script.js?v=19"></script>
     
     <!-- SEO Text (Visually Hidden) -->
-    <div style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;">
+    <div class="visually-hidden">
         <h2>Creador de currículum vitae online gratis</h2>
         <p>ProCVX es la mejor herramienta para hacer tu currículum vitae online. Elige entre plantillas de currículum modernas, clásicas o minimalistas y descárgalo en PDF gratis. Aumenta tus posibilidades de conseguir empleo con un diseño premium y estructurado.</p>
         
