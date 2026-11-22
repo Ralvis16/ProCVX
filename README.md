@@ -108,7 +108,7 @@ ProCVX/
 
 > **Modo sin conexión:** si añades un archivo nuevo que la app necesite (otro `.js`, una fuente...), inclúyelo en la lista `APP_SHELL` de `sw.js` y sube el número de `CACHE_NAME`. El service worker solo funciona servido por `http(s)` (no abriendo `index.html` como archivo).
 
-> **Al publicar la web:** las redes sociales necesitan URLs absolutas para la imagen de vista previa. Sustituye `og-image.png` en las etiquetas `og:image` / `twitter:image` de `index.html` por la URL completa (p. ej. `https://tu-dominio/og-image.png`) y añade `<link rel="canonical" href="https://tu-dominio/">`.
+> **Publicación:** la web se sirve con GitHub Pages desde la rama `main` en https://ralvis16.github.io/ProCVX/. Si algún día usas un dominio propio, cambia esa URL en las etiquetas `og:url`, `og:image`, `twitter:image` y `canonical` de `index.html`.
 
 ---
 
