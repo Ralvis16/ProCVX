@@ -917,18 +917,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     sectionToggles.forEach(toggle => {
-        // Clicking the checkbox must not open/close the accordion
-        toggle.addEventListener('click', e => e.stopPropagation());
         toggle.addEventListener('change', () => {
             setSectionEnabled(toggle, toggle.checked);
             updateCompleteness();
             saveNow();
         });
-    });
-
-    // Clicks on the drag handle / arrows inside <summary> must not toggle the accordion
-    document.querySelectorAll('.section-controls').forEach(el => {
-        el.addEventListener('click', e => e.preventDefault());
     });
 
     function getSectionOrder() {
@@ -996,7 +989,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (typeof Sortable !== 'undefined' && accordionContainer) {
         new Sortable(accordionContainer, {
             animation: 150,
-            handle: '.accordion-trigger',
+            handle: '.accordion-trigger, .drag-handle',
             filter: '[data-fixed="true"] .accordion-trigger, input, textarea, select, button, .section-toggle',
             preventOnFilter: false,
             onMove: evt => !evt.related.hasAttribute('data-fixed'),
