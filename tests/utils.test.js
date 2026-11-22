@@ -76,6 +76,7 @@ test('sample data is chronologically coherent and has no duplicate links', () =>
         assert.deepEqual(exp, [...exp].sort((a, b) => b - a), 'experience newest first');
         const edu = sample.education.map(e => startYear(e.dates));
         assert.deepEqual(edu, [...edu].sort((a, b) => b - a), 'education newest first');
+        assert.ok(sample.certifications.length > 0 && sample.volunteer.length > 0, 'sample shows the optional sections');
         for (const lang of sample.languages) {
             assert.ok(U.levelLabelKeys[lang.level], `valid level ${lang.level}`);
         }
