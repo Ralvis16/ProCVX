@@ -1,10 +1,9 @@
 // ProCVX - Service worker: lets the app work offline.
 // Only the app's own static files are cached; the user's CV data lives in localStorage, never here.
-const CACHE_NAME = 'procvx-v1';
+const CACHE_NAME = 'procvx-v2';
 
 const APP_SHELL = [
     './',
-    './index.html',
     './style.css',
     './config.js',
     './storage.js',
@@ -65,6 +64,7 @@ self.addEventListener('activate', event => {
 });
 
 // Network first (always the latest version when online), cache as fallback when offline.
+// Hosts like Cloudflare Pages redirect /index.html to /, so the page is cached as './' only.
 // ignoreSearch lets "style.css?v=18" be served from the cached "style.css".
 self.addEventListener('fetch', event => {
     const { request } = event;
@@ -82,7 +82,7 @@ self.addEventListener('fetch', event => {
             .catch(async () => {
                 const cached = await caches.match(request, { ignoreSearch: true });
                 if (cached) return cached;
-                if (request.mode === 'navigate') return caches.match('./index.html');
+                if (request.mode === 'navigate') return caches.match('./');
                 return Response.error();
             })
     );
