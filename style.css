@@ -491,6 +491,7 @@ body {
 }
 
 .accordion-item {
+    position: relative;
     background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--color-editor-border);
     border-radius: 10px;
@@ -498,11 +499,13 @@ body {
     transition: border-color 0.2s ease;
 }
 
-.accordion-item[open] {
+.accordion-item:has(> .accordion-details[open]) {
     border-color: rgba(255, 255, 255, 0.12);
 }
 
 .accordion-trigger {
+    min-height: 3.5rem;
+    gap: 0.75rem;
     padding: 1rem;
     list-style: none;
     cursor: pointer;
@@ -538,7 +541,7 @@ body {
     transition: transform 0.2s ease;
 }
 
-.accordion-item[open] .accordion-trigger .chevron {
+.accordion-details[open] .accordion-trigger .chevron {
     transform: rotate(180deg);
     color: var(--cv-accent);
 }
@@ -1773,4 +1776,42 @@ body.template-classic .cv-main-col {
     color: #93c5fd;
     font-weight: 700;
     margin-left: 0.25rem;
+}
+
+
+/* Accordion header controls live OUTSIDE <summary> (interactive content inside
+   <summary> is not accessible) and are positioned over the header row. */
+.accordion-title {
+    flex: 1;
+    min-width: 0;
+}
+
+.accordion-title > span {
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.accordion-item:has(> .accordion-toggle) .accordion-trigger {
+    padding-left: calc(1rem + 15px + 0.6rem);
+}
+
+.accordion-item:has(> .accordion-tools) .accordion-title {
+    margin-right: 110px;
+}
+
+.accordion-toggle {
+    position: absolute;
+    left: 1rem;
+    top: calc(1.75rem - 7.5px);
+    margin: 0;
+    z-index: 2;
+}
+
+.accordion-tools {
+    position: absolute;
+    top: 0;
+    right: calc(1rem + 18px + 0.5rem);
+    height: 3.5rem;
 }
