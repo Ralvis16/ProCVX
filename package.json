@@ -1,0 +1,13 @@
+{
+  "name": "procvx",
+  "private": true,
+  "description": "ProCVX - static resume builder. No build step: only used to run the tests.",
+  "scripts": {
+    "test": "node --test --test-concurrency=1 tests/*.test.js",
+    "test:unit": "node --test tests/utils.test.js",
+    "bump": "node tools/bump-version.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
