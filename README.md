@@ -92,6 +92,7 @@ ProCVX/
 ├── sample-data.js      # CV de ejemplo (ES / EN), mismo formato que el JSON exportado
 ├── config.js           # Configuración global y claves de almacenamiento
 ├── sw.js               # Service worker (modo sin conexión)
+├── _headers            # Cabeceras HTTP para Cloudflare Pages (caché y seguridad)
 ├── manifest.webmanifest # Datos para instalar la app (PWA)
 ├── icons/              # Iconos PNG de la app (192, 512 y maskable)
 ├── favicon.svg         # Icono de la pestaña
@@ -108,7 +109,7 @@ ProCVX/
 
 > **Modo sin conexión:** si añades un archivo nuevo que la app necesite (otro `.js`, una fuente...), inclúyelo en la lista `APP_SHELL` de `sw.js` y sube el número de `CACHE_NAME`. El service worker solo funciona servido por `http(s)` (no abriendo `index.html` como archivo).
 
-> **Publicación:** la web se sirve con GitHub Pages desde la rama `main` en https://ralvis16.github.io/ProCVX/. Si algún día usas un dominio propio, cambia esa URL en las etiquetas `og:url`, `og:image`, `twitter:image` y `canonical` de `index.html`.
+> **Publicación:** la web oficial es https://procvx.com (Cloudflare Pages, desplegada desde la rama `main`). Esa URL figura en las etiquetas `og:url`, `og:image`, `twitter:image` y `canonical` de `index.html`; si cambia el dominio, actualízalas. El archivo `_headers` indica a Cloudflare que no guarde en caché `index.html` ni `sw.js` (así las actualizaciones llegan al momento) y añade cabeceras de seguridad básicas.
 
 ---
 

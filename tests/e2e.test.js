@@ -361,6 +361,11 @@ test('offline: once visited over http, the app reloads and works without network
         '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
     const server = http.createServer((req, res) => {
         let file = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+        // Behave like Cloudflare Pages: /index.html redirects to /
+        if (file === '/index.html') {
+            res.writeHead(308, { Location: '/' }).end();
+            return;
+        }
         if (file.endsWith('/')) file += 'index.html';
         const full = path.join(root, file);
         if (!full.startsWith(root) || !fs.existsSync(full) || fs.statSync(full).isDirectory()) {
@@ -401,5 +406,9 @@ test('offline: once visited over http, the app reloads and works without network
     const loadedFaces = await page.evaluate(async () =>
         (await document.fonts.load('600 16px Outfit')).filter(f => f.status === 'loaded').length);
     assert.ok(loadedFaces > 0, 'fonts load offline from the cache');
+
+    // A bookmarked /index.html also opens offline
+    await page.goto(url + 'index.html');
+    await page.waitForFunction(() => document.getElementById('preview-title').textContent === 'Hecho sin conexión');
     assert.deepEqual(errors, []);
 });
