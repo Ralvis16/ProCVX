@@ -446,32 +446,43 @@ test('guides: readable on mobile and lead back to the app', async t => {
     assert.deepEqual(errors, []);
 });
 
-test('donate link stays hidden without a URL and appears (with a post-PDF suggestion) when configured', async t => {
-    const { page } = await openApp(t);
-    assert.equal(await page.locator('#donate-link').isHidden(), true);
-
+test('donate link: hidden without a URL; with one, shown in the footer and suggested once after the PDF', async t => {
     const url = await startServer(t);
-    const context = await browser.newContext();
-    t.after(() => context.close());
-    const configured = await context.newPage();
-    await configured.route('**/config.js*', async route => {
-        const body = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8')
-            .replace("donateUrl: ''", "donateUrl: 'https://ko-fi.com/ejemplo'");
-        await route.fulfill({ body, contentType: 'text/javascript' });
-    });
-    await configured.goto(url);
-    const link = configured.locator('#donate-link');
+    const realConfig = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8');
+    assert.match(realConfig, /donateUrl: 'https:\/\/buymeacoffee\.com\/raniell166'/, 'production link configured');
+
+    async function pageWithDonateUrl(donateUrl) {
+        const context = await browser.newContext();
+        t.after(() => context.close());
+        const page = await context.newPage();
+        await page.route('**/config.js*', route => route.fulfill({
+            body: realConfig.replace(/donateUrl: '[^']*'/, `donateUrl: '${donateUrl}'`),
+            contentType: 'text/javascript'
+        }));
+        await page.goto(url);
+        await page.waitForFunction(() => document.getElementById('preview-fullname').textContent.includes('Alex'));
+        return page;
+    }
+
+    for (const bad of ['', 'javascript:alert(1)', 'http://insecure.example']) {
+        const hiddenPage = await pageWithDonateUrl(bad);
+        assert.equal(await hiddenPage.locator('#donate-link').isHidden(), true, `hidden for "${bad}"`);
+    }
+
+    const page = await pageWithDonateUrl('https://buymeacoffee.com/raniell166');
+    const link = page.locator('#donate-link');
     await link.waitFor({ state: 'visible' });
-    assert.equal(await link.getAttribute('href'), 'https://ko-fi.com/ejemplo');
+    assert.equal(await link.getAttribute('href'), 'https://buymeacoffee.com/raniell166');
     assert.equal(await link.getAttribute('rel'), 'noopener');
 
     // Simulate finishing the print dialog twice: the suggestion shows only once
-    await configured.evaluate(() => { window.print = () => window.dispatchEvent(new Event('afterprint')); });
-    await configured.click('#btn-export-pdf');
-    const toastLink = configured.locator('.toast .toast-action');
+    await page.evaluate(() => { window.print = () => window.dispatchEvent(new Event('afterprint')); });
+    await page.click('#btn-export-pdf');
+    const toastLink = page.locator('.toast .toast-action');
     await toastLink.waitFor();
-    assert.equal(await toastLink.getAttribute('href'), 'https://ko-fi.com/ejemplo');
-    await configured.click('#btn-export-pdf');
-    await configured.waitForTimeout(900);
-    assert.equal(await configured.locator('.toast .toast-action').count(), 1);
+    assert.equal(await toastLink.getAttribute('href'), 'https://buymeacoffee.com/raniell166');
+    assert.equal(await toastLink.innerText(), 'Invítame a un café');
+    await page.click('#btn-export-pdf');
+    await page.waitForTimeout(900);
+    assert.equal(await page.locator('.toast .toast-action').count(), 1);
 });
