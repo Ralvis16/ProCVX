@@ -22,7 +22,7 @@
             {
                 title: 'Transformación Digital Departamental',
                 tech: 'Gestión del cambio, CRM, Formación',
-                desc: 'Estrategia de transformación digital del área de ventas: 95 % de adopción del nuevo CRM en 3 meses.'
+                desc: '95 % de adopción del nuevo CRM de ventas en solo 3 meses.'
             }
         ],
         experience: [
@@ -30,24 +30,29 @@
                 role: 'Gestor de Proyectos Senior',
                 company: 'Innovación Global S.A.',
                 dates: 'Mar 2021 - Actualidad',
-                desc: '• Liderazgo de un equipo de 15 personas en nuevos procesos operativos.\n• Reducción de los costes operativos en un 20 % el primer año.'
+                desc: '• Liderazgo de un equipo de 15 personas.\n• Reducción de los costes operativos en un 20 % el primer año.'
             },
             {
                 role: 'Consultor de Estrategia',
                 company: 'Estrategias Empresariales S.L.',
                 dates: 'Mar 2018 - Feb 2021',
-                desc: '• Análisis de mercado e informes para clientes del sector retail.\n• Apoyo en la reestructuración de departamentos financieros.'
+                desc: '• Análisis de mercado e informes para clientes del sector retail.'
             },
             {
                 role: 'Analista de Datos',
                 company: 'DataTech Solutions',
                 dates: 'Sep 2011 - Feb 2018',
-                desc: '• Desarrollo de cuadros de mando interactivos en Power BI.\n• Presentación de conclusiones a la dirección ejecutiva.'
+                desc: '• Desarrollo de cuadros de mando interactivos en Power BI.'
             }
         ],
+        certifications: [
+            { name: 'Project Management Professional (PMP)', issuer: 'Project Management Institute', date: '2020' }
+        ],
+        volunteer: [
+            { role: 'Mentor de emprendedores', organization: 'Fundación Impulso Joven', dates: '2019 - Actualidad', desc: '' }
+        ],
         education: [
-            { degree: 'Máster en Dirección de Empresas (MBA)', school: 'Universidad de Barcelona', dates: '2016 - 2018' },
-            { degree: 'Grado en Administración y Dirección de Empresas', school: 'Universidad de Barcelona', dates: '2007 - 2011' }
+            { degree: 'Máster en Dirección de Empresas (MBA)', school: 'Universidad de Barcelona', dates: '2016 - 2018' }
         ]
     };
 
@@ -62,7 +67,7 @@
         linkedin: 'linkedin.com/in/alextorto',
         summary: 'Project manager with over 10 years of experience leading cross-functional teams and optimizing processes. I combine agile management with data analysis to deliver business goals.',
         skills: [{ name: 'Jira, Microsoft Project, Power BI, Advanced Excel, SAP ERP, SQL' }],
-        softskillsDesc: '• Agile management (Scrum, Kanban)\n• Team leadership\n• Communication and negotiation\n• Problem-solving',
+        softskillsDesc: '• Agile (Scrum, Kanban)\n• Team leadership\n• Negotiation\n• Problem-solving',
         photo: null,
         languages: [
             { name: 'English', level: 'Nativo' },
@@ -73,7 +78,7 @@
             {
                 title: 'Departmental Digital Transformation',
                 tech: 'Change management, CRM, Training',
-                desc: 'Digital transformation strategy for the sales department: 95% adoption of the new CRM in 3 months.'
+                desc: '95% adoption of the new sales CRM in just 3 months.'
             }
         ],
         experience: [
@@ -81,24 +86,29 @@
                 role: 'Senior Project Manager',
                 company: 'Global Innovation Inc.',
                 dates: 'Mar 2021 - Present',
-                desc: '• Led a 15-person team implementing new operational processes.\n• Reduced operational costs by 20% in the first year.'
+                desc: '• Led a 15-person team.\n• Reduced operational costs by 20% in the first year.'
             },
             {
                 role: 'Strategy Consultant',
                 company: 'Business Strategies LLC',
                 dates: 'Mar 2018 - Feb 2021',
-                desc: '• Market analysis and reports for key retail clients.\n• Supported the restructuring of finance departments.'
+                desc: '• Market analysis and reports for key retail clients.'
             },
             {
                 role: 'Data Analyst',
                 company: 'DataTech Solutions',
                 dates: 'Sep 2011 - Feb 2018',
-                desc: '• Built interactive dashboards in Power BI.\n• Presented insights to executive management.'
+                desc: '• Built interactive dashboards in Power BI.'
             }
         ],
+        certifications: [
+            { name: 'Project Management Professional (PMP)', issuer: 'Project Management Institute', date: '2020' }
+        ],
+        volunteer: [
+            { role: 'Startup Mentor', organization: 'Young Founders Foundation', dates: '2019 - Present', desc: '' }
+        ],
         education: [
-            { degree: 'Master of Business Administration (MBA)', school: 'New York University', dates: '2016 - 2018' },
-            { degree: 'B.S. in Business Administration', school: 'New York University', dates: '2007 - 2011' }
+            { degree: 'Master of Business Administration (MBA)', school: 'New York University', dates: '2016 - 2018' }
         ]
     };
 

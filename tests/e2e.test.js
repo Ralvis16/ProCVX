@@ -44,7 +44,7 @@ const modalIsClosed = (page, id) => page.waitForFunction(modalId => {
 test('first visit shows the sample CV and the completeness meter', async t => {
     const { page } = await openApp(t);
     assert.match(await previewText(page, 'preview-fullname'), /Alex Torto\s+Ramos/);
-    assert.equal(await page.locator('#cv-preview-sheet .cv-item-block').count(), 6);
+    assert.equal(await page.locator('#cv-preview-sheet .cv-item-block').count(), 7);
     // Duplicate LinkedIn/link contact no longer shown
     assert.equal(await page.locator('#cv-contact-link-container').isHidden(), true);
     assert.match(await page.locator('#completeness-text').innerText(), /100 %/);
@@ -249,6 +249,53 @@ test('mobile: editor/preview switch and a scaled A4 preview without horizontal s
     assert.ok(overflow <= 0, `no horizontal scroll (${overflow}px)`);
 });
 
+test('certifications and volunteering can be added, rendered, toggled and saved', async t => {
+    const { page } = await openApp(t);
+    await page.click('#btn-clear-data');
+    await page.click('#modal-btn-confirm');
+    assert.equal(await page.locator('#cv-section-certifications').isHidden(), true);
+    assert.equal(await page.locator('#cv-section-volunteer').isHidden(), true);
+
+    await page.locator('summary', { has: page.locator('[data-i18n="sec_certifications"]') }).click();
+    await page.click('#btn-add-certification');
+    const cert = page.locator('#certifications-list .dynamic-item').last();
+    await cert.locator('.cert-name').fill('AWS Cloud Practitioner');
+    await cert.locator('.cert-issuer').fill('Amazon <Web> Services');
+    await cert.locator('.cert-date').fill('2025');
+
+    await page.locator('summary', { has: page.locator('[data-i18n="sec_volunteer"]') }).click();
+    await page.click('#btn-add-volunteer');
+    const vol = page.locator('#volunteer-list .dynamic-item').last();
+    await vol.locator('.vol-role').fill('Mentor');
+    await vol.locator('.vol-org').fill('Cruz Roja');
+    await vol.locator('.vol-desc').focus();
+    await page.keyboard.type('Talleres');
+
+    const certPreview = page.locator('#preview-certifications');
+    assert.match(await certPreview.innerText(), /AWS Cloud Practitioner\s+Amazon <Web> Services\s+2025/);
+    const volPreview = page.locator('#preview-volunteer');
+    assert.match(await volPreview.innerText(), /Mentor\s+Cruz Roja/);
+    assert.equal(await volPreview.locator('.cv-bullets li').innerText(), 'Talleres');
+    assert.equal(await volPreview.locator('.cv-item-dates').count(), 0, 'no empty date line');
+    assert.equal(await page.locator('#preview-title-certifications-header span').textContent(), 'Certificaciones');
+
+    await page.locator('.section-toggle[data-section="cv-section-volunteer"]').uncheck();
+    assert.equal(await page.locator('#cv-section-volunteer').isHidden(), true);
+
+    await page.waitForFunction(k => JSON.parse(localStorage.getItem(k)).certifications?.length === 1, STATE_KEY);
+    await page.reload();
+    await page.waitForFunction(() => document.querySelectorAll('#certifications-list .dynamic-item').length === 1);
+    assert.equal(await page.locator('#certifications-list .cert-issuer').inputValue(), 'Amazon <Web> Services');
+    assert.equal(await page.locator('#volunteer-list .vol-desc').inputValue(), '• Talleres');
+    assert.equal(await page.locator('#cv-section-volunteer').isHidden(), true);
+
+    // Language switch translates the new default titles
+    await page.click('#lang-dropdown-header');
+    await page.click('#lang-dropdown-menu [data-lang="en"]');
+    assert.equal(await page.inputValue('#input-title-volunteer'), 'Volunteering');
+    assert.equal(await page.inputValue('#input-title-certifications'), 'Certifications');
+});
+
 test('print/PDF: the CV prints from any view, on A4, with readable bullet order', async t => {
     const { page } = await openApp(t, { viewport: { width: 390, height: 844 } });
     // Mobile page in "editor" view: print must still output the CV
@@ -262,6 +309,17 @@ test('print/PDF: the CV prints from any view, on A4, with readable bullet order'
     assert.match(text, /Alex Torto/);
     assert.match(text, /•\s*Liderazgo de un equipo/, 'bullet precedes its text');
     assert.doesNotMatch(text, /Editor de Datos|Vista previa/, 'no UI in the PDF');
+    assert.match(text, /CERTIFICACIONES/);
+    assert.match(text, /VOLUNTARIADO/);
+
+    // The English sample must fit on one page too
+    await page.emulateMedia({ media: 'screen' });
+    await page.click('#lang-dropdown-header');
+    await page.click('#lang-dropdown-menu [data-lang="en"]');
+    await page.emulateMedia({ media: 'print' });
+    await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
+    const enPages = Number(execFileSync('pdfinfo', [pdfPath]).toString().match(/Pages:\s+(\d+)/)[1]);
+    assert.equal(enPages, 1, 'English sample CV fits on one page');
 });
 
 test('data saved by previous versions still loads (backwards compatibility)', async t => {
@@ -288,4 +346,60 @@ test('data saved by previous versions still loads (backwards compatibility)', as
     const [proj, exp] = await page.evaluate(() => ['cv-section-projects', 'cv-section-experience']
         .map(id => Number(document.getElementById(id).style.order)));
     assert.ok(proj < exp, 'saved custom section order is kept');
+    // Sections added after that order was saved go right after their default predecessor
+    const [volunteer, education, certs, softskills] = await page.evaluate(() =>
+        ['cv-section-volunteer', 'cv-section-education', 'cv-section-certifications', 'cv-section-softskills']
+            .map(id => Number(document.getElementById(id).style.order)));
+    assert.ok(proj < volunteer && volunteer < education, 'volunteer placed after projects');
+    assert.ok(education < certs && certs < softskills, 'certifications placed after education');
+});
+
+test('offline: once visited over http, the app reloads and works without network', async t => {
+    const http = require('http');
+    const root = path.join(__dirname, '..');
+    const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+        '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
+    const server = http.createServer((req, res) => {
+        let file = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+        if (file.endsWith('/')) file += 'index.html';
+        const full = path.join(root, file);
+        if (!full.startsWith(root) || !fs.existsSync(full) || fs.statSync(full).isDirectory()) {
+            res.writeHead(404).end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': types[path.extname(full)] || 'application/octet-stream' });
+        fs.createReadStream(full).pipe(res);
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    t.after(() => server.close());
+    const url = `http://127.0.0.1:${server.address().port}/`;
+
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+    t.after(() => context.close());
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    await page.goto(url);
+    await page.waitForFunction(() => navigator.serviceWorker.controller !== null
+        || navigator.serviceWorker.ready.then(() => false), null, { timeout: 15000 }).catch(() => {});
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.locator('.toast-success', { hasText: /sin conexión/ }).waitFor();
+    assert.equal(await page.evaluate(async () => (await caches.keys()).length), 1);
+
+    await page.evaluate(() => {
+        const input = document.getElementById('input-title');
+        input.value = 'Hecho sin conexión';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForFunction(() => JSON.parse(localStorage.getItem('procvx-state')).title === 'Hecho sin conexión');
+
+    await context.setOffline(true);
+    await page.reload();
+    await page.waitForFunction(() => document.getElementById('preview-title').textContent === 'Hecho sin conexión');
+    assert.ok(await page.evaluate(() => typeof lucide !== 'undefined' && typeof Sortable !== 'undefined'), 'vendor scripts served from cache');
+    assert.equal(await page.locator('#cv-preview-sheet svg').first().isVisible(), true, 'icons rendered offline');
+    const loadedFaces = await page.evaluate(async () =>
+        (await document.fonts.load('600 16px Outfit')).filter(f => f.status === 'loaded').length);
+    assert.ok(loadedFaces > 0, 'fonts load offline from the cache');
+    assert.deepEqual(errors, []);
 });

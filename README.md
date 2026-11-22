@@ -13,7 +13,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
     *   🌲 **Emerald** (Verde menta sofisticado)
     *   ❄️ **Nordic** (Tonos fríos y sobrios)
 *   **Tres Estructuras (Plantillas):** **Moderno** (dos columnas), **Minimalista** (una columna, cabecera centrada; la más recomendable para los filtros automáticos **ATS** de las empresas) y **Clásico** (tipografía con serifa).
-*   **Secciones Flexibles:** Activa o desactiva secciones enteras (Perfil, Experiencia, Proyectos, Formación, Habilidades, Tecnología o Idiomas) con los *checkboxes* de las cabeceras, y reordénalas arrastrándolas o con las flechas.
+*   **Secciones Flexibles:** Activa o desactiva secciones enteras (Perfil, Experiencia, Proyectos, Voluntariado, Formación, Certificaciones, Habilidades, Tecnología o Idiomas) con los *checkboxes* de las cabeceras, y reordénalas arrastrándolas o con las flechas.
 *   **Descripciones con Viñetas y Texto Justificado:** Las descripciones de experiencia y proyectos se muestran justificadas, y las líneas con viñeta (`•`) llevan sangría francesa para que el texto quede alineado.
 *   **Foto de Perfil Optimizada:** La imagen se reduce automáticamente (máx. 400 px, JPEG) para que ocupe poco en el navegador y en los archivos exportados.
 *   **Importar / Exportar JSON:** Guarda tu currículum en un archivo y cárgalo cuando quieras, en este u otro dispositivo.
@@ -25,6 +25,8 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 *   **Interfaz Bilingüe (ES / EN):** Textos, ejemplos, avisos y niveles de idioma se traducen en tiempo real.
 *   **Persistencia Local Automática:** El progreso, el tema, la plantilla y el orden de las secciones se guardan en el `localStorage` del navegador (con un pequeño retardo mientras escribes, y siempre al cerrar o cambiar de pestaña). Si el navegador no puede guardar (p. ej. por espacio), se avisa al usuario.
 *   **Datos de Ejemplo:** En la primera visita se cargan datos de ejemplo coherentes (en el idioma elegido) que caben en una página; el botón **Ejemplo** permite recargarlos. Tras **Limpiar**, el CV queda vacío aunque recargues la página.
+*   **Certificaciones y Voluntariado:** Secciones propias para certificaciones o cursos (nombre, entidad y fecha, en la columna lateral) y para voluntariado (rol, organización, fechas y logros con viñetas, en la columna principal). Si ya tenías un orden de secciones guardado, las nuevas se colocan en su sitio natural.
+*   **Funciona sin Conexión (PWA):** Tras la primera visita desde la web publicada, un *service worker* guarda los archivos de la aplicación, así que se puede abrir y usar sin internet. También se puede instalar como app desde el navegador. La copia en caché no contiene datos del usuario.
 *   **Privacidad Real:** Todo se procesa en tu navegador. Librerías, iconos y tipografías se alojan en el propio proyecto: no se hacen peticiones a servidores de terceros.
 
 ---
@@ -89,6 +91,9 @@ ProCVX/
 ├── i18n.js             # Diccionario de traducciones ES / EN
 ├── sample-data.js      # CV de ejemplo (ES / EN), mismo formato que el JSON exportado
 ├── config.js           # Configuración global y claves de almacenamiento
+├── sw.js               # Service worker (modo sin conexión)
+├── manifest.webmanifest # Datos para instalar la app (PWA)
+├── icons/              # Iconos PNG de la app (192, 512 y maskable)
 ├── favicon.svg         # Icono de la pestaña
 ├── og-image.png        # Imagen al compartir el enlace (1200×630)
 ├── tests/              # Tests unitarios y end-to-end (Playwright)
@@ -100,6 +105,8 @@ ProCVX/
 ```
 
 > Al actualizar `style.css` o cualquier archivo JavaScript, ejecuta `node tools/bump-version.js` (o `npm run bump`): sube a la vez todos los `?v=` de `index.html` para que el navegador no use copias antiguas en caché.
+
+> **Modo sin conexión:** si añades un archivo nuevo que la app necesite (otro `.js`, una fuente...), inclúyelo en la lista `APP_SHELL` de `sw.js` y sube el número de `CACHE_NAME`. El service worker solo funciona servido por `http(s)` (no abriendo `index.html` como archivo).
 
 > **Al publicar la web:** las redes sociales necesitan URLs absolutas para la imagen de vista previa. Sustituye `og-image.png` en las etiquetas `og:image` / `twitter:image` de `index.html` por la URL completa (p. ej. `https://tu-dominio/og-image.png`) y añade `<link rel="canonical" href="https://tu-dominio/">`.
 
@@ -113,4 +120,4 @@ npm test
 ```
 
 *   `tests/utils.test.js`: tests unitarios de las utilidades, traducciones y datos de ejemplo (solo Node).
-*   `tests/e2e.test.js`: abre la app en Chromium con Playwright y prueba edición, guardado, importar/exportar, idiomas, teclado, móvil y la exportación a PDF (comprueba que el ejemplo cabe en una página A4). Necesita `pdfinfo`/`pdftotext` (poppler-utils) y un Chromium para Playwright (`npx playwright install chromium`).
+*   `tests/e2e.test.js`: abre la app en Chromium con Playwright y prueba edición, guardado, importar/exportar, idiomas, teclado, móvil, certificaciones y voluntariado, la exportación a PDF (comprueba que el ejemplo cabe en una página A4 en los dos idiomas) y el modo sin conexión (levanta un servidor local y recarga la app sin red). Necesita `pdfinfo`/`pdftotext` (poppler-utils) y un Chromium para Playwright (`npx playwright install chromium`).

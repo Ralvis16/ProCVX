@@ -18,7 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
         'cv-section-summary',
         'cv-section-experience',
         'cv-section-projects',
+        'cv-section-volunteer',
         'cv-section-education',
+        'cv-section-certifications',
         'cv-section-softskills',
         'cv-section-skills',
         'cv-section-languages'
@@ -28,7 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
         profile: ['input-title-profile', 'def_profile'],
         experience: ['input-title-experience', 'def_experience'],
         projects: ['input-title-projects', 'def_projects'],
+        volunteer: ['input-title-volunteer', 'def_volunteer'],
         education: ['input-title-education', 'def_education'],
+        certifications: ['input-title-certifications', 'def_certifications'],
         skills: ['input-title-skills', 'def_skills'],
         softskills: ['input-title-softskills', 'def_softskills'],
         languages: ['input-title-languages', 'def_languages']
@@ -66,9 +70,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const experienceList = $('experience-list');
     const projectsList = $('projects-list');
     const educationList = $('education-list');
+    const volunteerList = $('volunteer-list');
+    const certificationsList = $('certifications-list');
     const skillsList = $('skills-list');
     const languagesList = $('languages-list');
-    const dynamicLists = [experienceList, projectsList, educationList, skillsList, languagesList];
+    const dynamicLists = [experienceList, projectsList, educationList, volunteerList, certificationsList, skillsList, languagesList];
 
     const previewSkillsDynamic = $('preview-skills-dynamic');
     const previewSoftSkillsDesc = $('preview-softskills-desc');
@@ -150,6 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let projIdCounter = 0;
     let eduIdCounter = 0;
     let langIdCounter = 0;
+    let volIdCounter = 0;
+    let certIdCounter = 0;
 
     function createDynamicItemContainer(id, innerHtml) {
         return `
@@ -255,6 +263,48 @@ document.addEventListener('DOMContentLoaded', () => {
         `);
     }
 
+    function addVolunteerField(data = {}) {
+        data = data || {};
+        const id = `vol-${volIdCounter++}`;
+        appendDynamicField(volunteerList, id, `
+                <div class="form-group">
+                    <label for="${id}-role" data-i18n="lbl_vol_role">Rol / Actividad</label>
+                    <input type="text" id="${id}-role" class="vol-role" data-i18n="ph_vol_role" value="${escapeHtml(data.role)}" placeholder="Ej. Mentor de jóvenes">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-org" data-i18n="lbl_vol_org">Organización</label>
+                    <input type="text" id="${id}-org" class="vol-org" data-i18n="ph_vol_org" value="${escapeHtml(data.organization)}" placeholder="Ej. Cruz Roja">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-dates" data-i18n="lbl_vol_dates">Periodo (Fechas)</label>
+                    <input type="text" id="${id}-dates" class="vol-dates" data-i18n="ph_vol_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2022 - Actualidad">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-desc" data-i18n="lbl_vol_desc">Descripción / Logros</label>
+                    <textarea id="${id}-desc" class="vol-desc bullet-textarea" rows="2" data-i18n="ph_vol_desc" placeholder="Ej. Talleres de orientación laboral para jóvenes...">${escapeHtml(data.desc)}</textarea>
+                </div>
+        `);
+    }
+
+    function addCertificationField(data = {}) {
+        data = data || {};
+        const id = `cert-${certIdCounter++}`;
+        appendDynamicField(certificationsList, id, `
+                <div class="form-group">
+                    <label for="${id}-name" data-i18n="lbl_cert_name">Certificación / Curso</label>
+                    <input type="text" id="${id}-name" class="cert-name" data-i18n="ph_cert_name" value="${escapeHtml(data.name)}" placeholder="Ej. AWS Certified Cloud Practitioner">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-issuer" data-i18n="lbl_cert_issuer">Entidad emisora</label>
+                    <input type="text" id="${id}-issuer" class="cert-issuer" data-i18n="ph_cert_issuer" value="${escapeHtml(data.issuer)}" placeholder="Ej. Amazon Web Services">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-date" data-i18n="lbl_cert_date">Fecha</label>
+                    <input type="text" id="${id}-date" class="cert-date" data-i18n="ph_cert_date" value="${escapeHtml(data.date)}" placeholder="Ej. Mayo 2025">
+                </div>
+        `);
+    }
+
     // The single comma-separated skills field
     function setSkillsField(name = '') {
         skillsList.innerHTML = `
@@ -325,7 +375,9 @@ document.addEventListener('DOMContentLoaded', () => {
         ['btn-add-experience', addExperienceField],
         ['btn-add-project', addProjectField],
         ['btn-add-education', addEducationField],
-        ['btn-add-language', addLanguageField]
+        ['btn-add-language', addLanguageField],
+        ['btn-add-volunteer', addVolunteerField],
+        ['btn-add-certification', addCertificationField]
     ].forEach(([buttonId, addField]) => {
         $(buttonId)?.addEventListener('click', () => addField());
     });
@@ -501,6 +553,29 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    function buildVolunteerHtml(role, organization, dates, desc) {
+        return `
+            <div class="cv-item-block">
+                <div class="cv-item-header">
+                    <div class="cv-item-title">${escapeHtml(role)}</div>
+                    <div class="cv-item-meta">${escapeHtml(organization)}</div>
+                </div>
+                ${dates.trim() ? `<div class="cv-item-dates">${escapeHtml(dates)}</div>` : ''}
+                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
+            </div>
+        `;
+    }
+
+    function buildCertificationHtml(name, issuer, date) {
+        return `
+            <div class="cv-item-block">
+                <div class="cv-item-title">${escapeHtml(name)}</div>
+                ${issuer.trim() ? `<div class="cv-item-meta">${escapeHtml(issuer)}</div>` : ''}
+                ${date.trim() ? `<div class="cv-item-dates">${escapeHtml(date)}</div>` : ''}
+            </div>
+        `;
+    }
+
     // Renders one dynamic list into its preview container; hides the section when the list is empty.
     function renderListPreview(list, sectionId, containerId, readItem, buildHtml) {
         const items = list.querySelectorAll('.dynamic-item');
@@ -539,6 +614,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const values = [val(item, '.edu-degree'), val(item, '.edu-school'), val(item, '.edu-dates')];
             return values[0] || values[1] ? values : null;
         }, buildEducationHtml);
+    }
+
+    function updateVolunteerPreview() {
+        renderListPreview(volunteerList, 'cv-section-volunteer', 'preview-volunteer', item => {
+            const values = [val(item, '.vol-role'), val(item, '.vol-org'), val(item, '.vol-dates'), val(item, '.vol-desc')];
+            return values[0] || values[1] ? values : null;
+        }, buildVolunteerHtml);
+    }
+
+    function updateCertificationsPreview() {
+        renderListPreview(certificationsList, 'cv-section-certifications', 'preview-certifications', item => {
+            const values = [val(item, '.cert-name'), val(item, '.cert-issuer'), val(item, '.cert-date')];
+            return values[0] ? values : null;
+        }, buildCertificationHtml);
     }
 
     function getSkillNames() {
@@ -646,6 +735,8 @@ document.addEventListener('DOMContentLoaded', () => {
         updateExperiencePreview();
         updateProjectsPreview();
         updateEducationPreview();
+        updateVolunteerPreview();
+        updateCertificationsPreview();
         updateSkillsPreview();
         updateSoftSkillsPreview();
         updateLanguagesPreview();
@@ -857,7 +948,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function applySectionOrder(order) {
         if (!Array.isArray(order)) return;
-        order.forEach(sectionId => {
+        // Orders saved before a section existed don't list it: insert it after its default predecessor
+        const fullOrder = order.map(String).filter(id => DEFAULT_SECTION_ORDER.includes(id));
+        DEFAULT_SECTION_ORDER.forEach((sectionId, index) => {
+            if (fullOrder.includes(sectionId)) return;
+            const prevIndex = fullOrder.indexOf(DEFAULT_SECTION_ORDER[index - 1]);
+            fullOrder.splice(prevIndex + 1, 0, sectionId);
+        });
+        fullOrder.forEach(sectionId => {
             const toggle = document.querySelector(`.section-toggle[data-section="${CSS.escape(String(sectionId))}"]`);
             const item = toggle?.closest('.accordion-item');
             if (item?.parentNode) item.parentNode.appendChild(item);
@@ -958,6 +1056,13 @@ document.addEventListener('DOMContentLoaded', () => {
             education: items(educationList, item => ({
                 degree: val(item, '.edu-degree'), school: val(item, '.edu-school'), dates: val(item, '.edu-dates')
             })),
+            volunteer: items(volunteerList, item => ({
+                role: val(item, '.vol-role'), organization: val(item, '.vol-org'),
+                dates: val(item, '.vol-dates'), desc: val(item, '.vol-desc')
+            })),
+            certifications: items(certificationsList, item => ({
+                name: val(item, '.cert-name'), issuer: val(item, '.cert-issuer'), date: val(item, '.cert-date')
+            })),
             languages: items(languagesList, item => ({
                 name: val(item, '.lang-name'), level: val(item, '.lang-level')
             })),
@@ -1004,6 +1109,8 @@ document.addEventListener('DOMContentLoaded', () => {
             validItems(state.experience).forEach(exp => addExperienceField(exp));
             validItems(state.projects).forEach(proj => addProjectField(proj));
             validItems(state.education).forEach(edu => addEducationField(edu));
+            validItems(state.volunteer).forEach(vol => addVolunteerField(vol));
+            validItems(state.certifications).forEach(cert => addCertificationField(cert));
         });
     }
 
@@ -1268,4 +1375,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     init();
+
+    // ----------------------------------------------------
+    // Offline support (service worker). Only over http(s): not available on file://
+    // ----------------------------------------------------
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+        const firstInstall = !navigator.serviceWorker.controller;
+        navigator.serviceWorker.register('sw.js').then(registration => {
+            const worker = registration.installing;
+            if (!firstInstall || !worker) return;
+            worker.addEventListener('statechange', () => {
+                if (worker.state === 'activated') toast(tr('toast_offline_ready'), 'success');
+            });
+        }).catch(() => { /* Offline mode is optional */ });
+    }
 });
