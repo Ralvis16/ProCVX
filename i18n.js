@@ -122,20 +122,22 @@
             privacy_title: "Política de Privacidad",
             privacy_body: `
                 <p><strong>Privacidad desde el Diseño (Client-Side Processing)</strong><br>
-                Esta herramienta ha sido desarrollada bajo el principio de máxima privacidad. <strong>No almacenamos, transmitimos, ni procesamos ningún dato personal de los usuarios en servidores externos.</strong></p>
+                Esta herramienta ha sido desarrollada bajo el principio de máxima privacidad. <strong>Los datos que escribes en tu currículum nunca salen de tu dispositivo:</strong> no los almacenamos, transmitimos ni procesamos en ningún servidor.</p>
                 <p><strong>1. Procesamiento de Datos Personales</strong><br>
                 Toda la información ingresada por el usuario (nombres, teléfonos, correos electrónicos, historial laboral y fotografías) es procesada <strong>exclusivamente en el navegador web local</strong> del dispositivo.</p>
                 <p><strong>2. Generación del Documento</strong><br>
                 La generación del archivo PDF se realiza localmente mediante la función de impresión de tu propio navegador. Ningún documento final ni dato intermediario viaja por internet hacia los creadores de esta página ni hacia terceros.</p>
                 <p><strong>3. Responsabilidad del Usuario</strong><br>
                 Al ser una aplicación 100% del lado del cliente, es responsabilidad exclusiva del usuario proteger la información generada o descargada en su propio dispositivo.</p>
-                <p><strong>4. Recursos de Terceros</strong><br>
-                Las librerías, los iconos y las tipografías se alojan en el propio sitio, por lo que la aplicación no carga recursos desde servidores de terceros.</p>
+                <p><strong>4. Estadísticas de Visitas</strong><br>
+                Para saber cuántas personas usan ProCVX y qué páginas visitan, utilizamos <strong>Cloudflare Web Analytics</strong>. Este servicio <strong>no usa cookies</strong> ni guarda nada en tu navegador, y no te sigue de un sitio web a otro: solo recoge estadísticas agregadas y anónimas de la visita (página vista, web de procedencia, tipo de navegador y dispositivo, y país). El contenido de tu currículum <strong>nunca</strong> se envía. Más información en la <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">política de privacidad de Cloudflare</a>.</p>
+                <p><strong>5. Recursos y Enlaces de Terceros</strong><br>
+                Las librerías, los iconos y las tipografías se alojan en el propio sitio. El único recurso externo es el script de estadísticas de Cloudflare indicado arriba. El enlace de donaciones lleva a Buy Me a Coffee, que aplica su propia política de privacidad solo si decides visitarlo.</p>
             `,
             storage_title: "Almacenamiento Local y Cookies",
             storage_body: `
-                <p><strong>Ausencia de Cookies de Rastreo</strong><br>
-                Este sitio web <strong>no utiliza cookies de seguimiento, analítica (como Google Analytics) o publicidad.</strong></p>
+                <p><strong>Sin Cookies</strong><br>
+                Este sitio web <strong>no utiliza cookies</strong>: ni de seguimiento, ni de publicidad, ni de analítica. Las estadísticas de visitas (Cloudflare Web Analytics) funcionan sin cookies y sin guardar nada en tu navegador.</p>
                 <p><strong>Uso de LocalStorage (Almacenamiento Local)</strong><br>
                 Para mejorar la experiencia del usuario y evitar la pérdida de información en caso de que la página se cierre o recargue accidentalmente, utilizamos la memoria de tu navegador (<code>localStorage</code>) con el único fin de:</p>
                 <ul>
@@ -328,20 +330,22 @@
             privacy_title: "Privacy Policy",
             privacy_body: `
                 <p><strong>Privacy by Design (Client-Side Processing)</strong><br>
-                This tool has been developed under the principle of maximum privacy. <strong>We do not store, transmit, or process any personal data of users on external servers.</strong></p>
+                This tool has been developed under the principle of maximum privacy. <strong>The data you type into your resume never leaves your device:</strong> we do not store, transmit or process it on any server.</p>
                 <p><strong>1. Personal Data Processing</strong><br>
                 All information entered by the user (names, phones, emails, work history, and photographs) is processed <strong>exclusively in the local web browser</strong> of the device.</p>
                 <p><strong>2. Document Generation</strong><br>
                 The PDF file is generated locally using your own browser's print function. No final document or intermediary data travels over the internet to the creators of this page or third parties.</p>
                 <p><strong>3. User Responsibility</strong><br>
                 Being a 100% client-side application, it is the exclusive responsibility of the user to protect the information generated or downloaded on their own device.</p>
-                <p><strong>4. Third-Party Resources</strong><br>
-                Libraries, icons and fonts are hosted on the site itself, so the application does not load resources from third-party servers.</p>
+                <p><strong>4. Visit Statistics</strong><br>
+                To know how many people use ProCVX and which pages they visit, we use <strong>Cloudflare Web Analytics</strong>. It <strong>does not use cookies</strong> or store anything in your browser, and it does not track you across websites: it only collects aggregated, anonymous visit statistics (page viewed, referring site, browser and device type, and country). The content of your resume is <strong>never</strong> sent. More information in <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">Cloudflare's privacy policy</a>.</p>
+                <p><strong>5. Third-Party Resources and Links</strong><br>
+                Libraries, icons and fonts are hosted on the site itself. The only external resource is the Cloudflare statistics script mentioned above. The donation link leads to Buy Me a Coffee, whose own privacy policy applies only if you choose to visit it.</p>
             `,
             storage_title: "Local Storage and Cookies",
             storage_body: `
-                <p><strong>No Tracking Cookies</strong><br>
-                This website <strong>does not use tracking, analytics (such as Google Analytics), or advertising cookies.</strong></p>
+                <p><strong>No Cookies</strong><br>
+                This website <strong>does not use cookies</strong>: no tracking, advertising or analytics cookies. Visit statistics (Cloudflare Web Analytics) work without cookies and without storing anything in your browser.</p>
                 <p><strong>Use of LocalStorage</strong><br>
                 To improve the user experience and prevent the loss of information in case the page is closed or accidentally reloaded, we use your browser's memory (<code>localStorage</code>) for the sole purpose of:</p>
                 <ul>
