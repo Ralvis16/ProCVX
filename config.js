@@ -3,7 +3,7 @@
     global.ProCVXConfig = Object.freeze({
         defaultLanguage: 'es',
         // Donation page (Ko-fi, Buy Me a Coffee...). Leave empty to hide the donate link.
-        donateUrl: '',
+        donateUrl: 'https://buymeacoffee.com/raniell166',
         storageKeys: Object.freeze({
             language: 'procvx_lang',
             state: 'procvx-state',
