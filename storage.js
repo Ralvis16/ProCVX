@@ -4,8 +4,9 @@
         try { return global.localStorage.getItem(key); } catch (error) { return null; }
     }
 
+    // Returns false when the value could not be stored (quota exceeded, private mode...)
     function write(key, value) {
-        try { global.localStorage.setItem(key, value); } catch (error) { /* Storage unavailable */ }
+        try { global.localStorage.setItem(key, value); return true; } catch (error) { return false; }
     }
 
     function remove(key) {

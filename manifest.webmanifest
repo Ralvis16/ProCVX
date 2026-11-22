@@ -1,0 +1,17 @@
+{
+  "name": "ProCVX - Creador de Currículum Profesional",
+  "short_name": "ProCVX",
+  "description": "Crea tu currículum profesional y expórtalo a PDF. Funciona sin conexión y tus datos no salen de tu dispositivo.",
+  "lang": "es",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "icons": [
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

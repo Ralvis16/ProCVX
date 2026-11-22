@@ -4,215 +4,175 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const { defaultLanguage: DEFAULT_LANGUAGE, storageKeys: STORAGE_KEYS } = window.ProCVXConfig;
-
-    // ----------------------------------------------------
-    // i18n Translation Dictionary
-    // ----------------------------------------------------
     const translations = window.ProCVXTranslations;
+    const SAMPLE_DATA = window.ProCVXSampleData;
+    const {
+        escapeHtml, formatDescHtml, hasRealText, parseCommaSeparated,
+        normalizeLevel, levelLabelKeys: LEVEL_LABEL_KEYS, debounce, toSafeUrl
+    } = window.ProCVXUtils;
+    const { read: readStorage, write: writeStorage, remove: removeStorage, parseJson } = window.ProCVXStorage;
+    const { createIcons, toast } = window.ProCVXUI;
 
-    // Translates a key using the current interface language
-    function tr(key) {
-        const lang = getCurrentLanguage();
-        return getTranslations(lang)[key] || key;
-    }
+    const SAVE_DELAY_MS = 400;
+    const DEFAULT_SECTION_ORDER = [
+        'cv-section-summary',
+        'cv-section-experience',
+        'cv-section-projects',
+        'cv-section-volunteer',
+        'cv-section-education',
+        'cv-section-certifications',
+        'cv-section-softskills',
+        'cv-section-skills',
+        'cv-section-languages'
+    ];
+    // Section title inputs and the translation key of their default value
+    const SECTION_TITLE_DEFAULTS = {
+        profile: ['input-title-profile', 'def_profile'],
+        experience: ['input-title-experience', 'def_experience'],
+        projects: ['input-title-projects', 'def_projects'],
+        volunteer: ['input-title-volunteer', 'def_volunteer'],
+        education: ['input-title-education', 'def_education'],
+        certifications: ['input-title-certifications', 'def_certifications'],
+        skills: ['input-title-skills', 'def_skills'],
+        softskills: ['input-title-softskills', 'def_softskills'],
+        languages: ['input-title-languages', 'def_languages']
+    };
 
-    function updateLanguage(lang) {
-        const t = getTranslations(lang);
-        if (!t) return;
-        
-        // Update HTML lang attribute for SEO
-        document.documentElement.lang = lang;
+    // ----------------------------------------------------
+    // DOM references
+    // ----------------------------------------------------
+    const $ = id => document.getElementById(id);
 
-        document.querySelectorAll('[data-i18n]').forEach(el => {
-            const key = el.getAttribute('data-i18n');
-            if (t[key]) {
-                if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-                    el.placeholder = t[key];
-                } else {
-                    el.textContent = t[key];
-                }
-            }
-        });
-        document.querySelectorAll('[data-i18n-html]').forEach(el => {
-            const key = el.getAttribute('data-i18n-html');
-            if (t[key]) {
-                el.innerHTML = t[key];
-            }
-        });
-        document.querySelectorAll('[data-i18n-title]').forEach(el => {
-            const key = el.getAttribute('data-i18n-title');
-            if (t[key]) {
-                el.setAttribute('title', t[key]);
-            }
-        });
+    const inputFullname = $('input-fullname');
+    const inputTitle = $('input-title');
+    const inputEmail = $('input-email');
+    const inputPhone = $('input-phone');
+    const inputLink = $('input-link');
+    const inputLinkedin = $('input-linkedin');
+    const inputWebsite = $('input-website');
+    const inputLocation = $('input-location');
+    const inputSummary = $('input-summary');
+    const inputSoftSkillsDesc = $('input-softskills-desc');
 
-        // Translate default section titles if they match previous/current defaults
-        const allLangs = Object.keys(translations);
-        const inputMap = {
-            'input-title-profile': 'def_profile',
-            'input-title-experience': 'def_experience',
-            'input-title-projects': 'def_projects',
-            'input-title-education': 'def_education',
-            'input-title-skills': 'def_skills',
-            'input-title-softskills': 'def_softskills',
-            'input-title-languages': 'def_languages'
-        };
-        for (const [id, key] of Object.entries(inputMap)) {
-            const input = document.getElementById(id);
-            if (input) {
-                const currentVal = input.value;
-                const isDefault = allLangs.some(l => translations[l][key] === currentVal);
-                if (isDefault) {
-                    input.value = t[key];
-                }
-            }
-        }
+    const inputTitleProfile = $('input-title-profile');
+    const inputTitleExperience = $('input-title-experience');
+    const inputTitleProjects = $('input-title-projects');
+    const inputTitleEducation = $('input-title-education');
+    const inputTitleSkills = $('input-title-skills');
+    const inputTitleSoftSkills = $('input-title-softskills');
+    const inputTitleLanguages = $('input-title-languages');
 
-        updatePreview();
-    }
+    const inputPhoto = $('input-photo');
+    const btnRemovePhoto = $('btn-remove-photo');
+    const previewPhoto = $('preview-photo');
+    let currentPhoto = null;
 
-    // DOM Elements - Form Fields
-    const inputFullname = document.getElementById('input-fullname');
-    const inputTitle = document.getElementById('input-title');
-    const inputEmail = document.getElementById('input-email');
-    const inputPhone = document.getElementById('input-phone');
-    const inputLink = document.getElementById('input-link');
-    const inputLinkedin = document.getElementById('input-linkedin');
-    const inputWebsite = document.getElementById('input-website');
-    const inputLocation = document.getElementById('input-location');
-    const inputSummary = document.getElementById('input-summary');
+    const experienceList = $('experience-list');
+    const projectsList = $('projects-list');
+    const educationList = $('education-list');
+    const volunteerList = $('volunteer-list');
+    const certificationsList = $('certifications-list');
+    const skillsList = $('skills-list');
+    const languagesList = $('languages-list');
+    const dynamicLists = [experienceList, projectsList, educationList, volunteerList, certificationsList, skillsList, languagesList];
 
-    const skillsList = document.getElementById('skills-list');
-    const previewSkillsDynamic = document.getElementById('preview-skills-dynamic');
-    
-    const languagesList = document.getElementById('languages-list');
-    const btnAddLanguage = document.getElementById('btn-add-language');
-    const previewLanguagesList = document.getElementById('preview-languages-list');
+    const previewSkillsDynamic = $('preview-skills-dynamic');
+    const previewSoftSkillsDesc = $('preview-softskills-desc');
+    const previewLanguagesList = $('preview-languages-list');
 
+    const btnSampleData = $('btn-sample-data');
+    const btnClearData = $('btn-clear-data');
+    const btnExportPdf = $('btn-export-pdf');
+    const btnImportJson = $('btn-import-json');
+    const btnExportJson = $('btn-export-json');
+    const inputJsonFile = $('input-json-file');
+
+    // ----------------------------------------------------
+    // i18n
+    // ----------------------------------------------------
     function getCurrentLanguage() {
         const savedLanguage = readStorage(STORAGE_KEYS.language);
-        return savedLanguage && translations[savedLanguage]
-            ? savedLanguage
-            : DEFAULT_LANGUAGE;
+        return savedLanguage && translations[savedLanguage] ? savedLanguage : DEFAULT_LANGUAGE;
     }
 
     function getTranslations(language = getCurrentLanguage()) {
         return translations[language] || translations.es;
     }
 
-    function readStorage(key) {
-        return window.ProCVXStorage.read(key);
+    function tr(key) {
+        return getTranslations()[key] || key;
     }
 
-    function writeStorage(key, value) {
-        window.ProCVXStorage.write(key, value);
+    function updateLanguage(lang) {
+        const t = getTranslations(lang);
+        if (!t) return;
+
+        document.documentElement.lang = lang;
+
+        document.querySelectorAll('[data-i18n]').forEach(el => {
+            const key = el.getAttribute('data-i18n');
+            if (!t[key]) return;
+            if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+                el.placeholder = t[key];
+            } else {
+                el.textContent = t[key];
+            }
+        });
+        document.querySelectorAll('[data-i18n-html]').forEach(el => {
+            const key = el.getAttribute('data-i18n-html');
+            if (t[key]) el.innerHTML = t[key];
+        });
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            if (t[key]) el.setAttribute('title', t[key]);
+        });
+        document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+            const key = el.getAttribute('data-i18n-aria');
+            if (t[key]) el.setAttribute('aria-label', t[key]);
+        });
+
+        // Page metadata
+        if (t.meta_title) document.title = t.meta_title;
+        const metaDescription = document.querySelector('meta[name="description"]');
+        if (metaDescription && t.meta_description) metaDescription.setAttribute('content', t.meta_description);
+
+        // Translate section titles that still hold a default value (in any language)
+        const allLangs = Object.keys(translations);
+        Object.values(SECTION_TITLE_DEFAULTS).forEach(([id, key]) => {
+            const input = $(id);
+            if (input && allLangs.some(l => translations[l][key] === input.value)) {
+                input.value = t[key];
+            }
+        });
+
+        refreshDropdownLabels();
+        updatePreview();
     }
-
-    function removeStorage(key) {
-        window.ProCVXStorage.remove(key);
-    }
-
-    function parseJson(value, fallback = null) {
-        return window.ProCVXStorage.parseJson(value, fallback);
-    }
-
-    // Section Titles
-    const inputTitleProfile = document.getElementById('input-title-profile');
-    const inputTitleExperience = document.getElementById('input-title-experience');
-    const inputTitleProjects = document.getElementById('input-title-projects');
-    const inputTitleEducation = document.getElementById('input-title-education');
-    const inputTitleSkills = document.getElementById('input-title-skills');
-    const inputTitleSoftSkills = document.getElementById('input-title-softskills');
-    const inputSoftSkillsDesc = document.getElementById('input-softskills-desc');
-    const inputTitleLanguages = document.getElementById('input-title-languages');
-
-    const previewTitleProfile = document.querySelector('#preview-title-profile-header span');
-    const previewTitleExperience = document.querySelector('#preview-title-experience-header span');
-    const previewTitleProjects = document.querySelector('#preview-title-projects-header span');
-    const previewTitleEducation = document.querySelector('#preview-title-education-header span');
-    const previewTitleSkills = document.querySelector('#preview-title-skills-header span');
-    const previewTitleSoftSkills = document.querySelector('#preview-title-softskills-header span');
-    const previewSoftSkillsDesc = document.getElementById('preview-softskills-desc');
-    const previewTitleLanguages = document.querySelector('#preview-title-languages-header span');
-
-    // Photo Elements
-    const inputPhoto = document.getElementById('input-photo');
-    const btnRemovePhoto = document.getElementById('btn-remove-photo');
-    const previewPhoto = document.getElementById('preview-photo');
-    let currentPhoto = null;
-
-    // Dynamic list containers in Editor
-    const experienceList = document.getElementById('experience-list');
-    const projectsList = document.getElementById('projects-list');
-    const educationList = document.getElementById('education-list');
-
-    // Action Buttons
-    const btnAddExperience = document.getElementById('btn-add-experience');
-    const btnAddProject = document.getElementById('btn-add-project');
-    const btnAddEducation = document.getElementById('btn-add-education');
-    const btnSampleData = document.getElementById('btn-sample-data');
-    const btnClearData = document.getElementById('btn-clear-data');
-    const btnExportPdf = document.getElementById('btn-export-pdf');
-    const btnImportJson = document.getElementById('btn-import-json');
-    const btnExportJson = document.getElementById('btn-export-json');
-    const inputJsonFile = document.getElementById('input-json-file');
-
-    // Helper to safely trigger Lucide icon creation without breaking execution
-    function safeCreateIcons() {
-        window.ProCVXUI.createIcons();
-    }
-
-    // Escapes user text before putting it in HTML attributes / innerHTML
-    function escapeHtml(value) {
-        return window.ProCVXUtils.escapeHtml(value);
-    }
-
-    // Language levels: stored in Spanish (backwards compatible), shown translated
-    const LEVEL_LABEL_KEYS = window.ProCVXUtils.levelLabelKeys;
-    function normalizeLevel(level) {
-        return window.ProCVXUtils.normalizeLevel(level);
-    }
-
-    // Turns a multi-line description into paragraphs and bullet lists (lines starting with "•")
-    // so wrapped bullet lines get a hanging indent and stay justified.
-    function formatDescHtml(text) {
-        return window.ProCVXUtils.formatDescHtml(text);
-    }
-
-    // True when a description has real text (not empty or just auto-inserted bullets)
-    function hasRealText(text) {
-        return window.ProCVXUtils.hasRealText(text);
-    }
-
-    // Converts comma-separated user input into clean, reusable values.
-    function parseCommaSeparated(value) {
-        return window.ProCVXUtils.parseCommaSeparated(value);
-    }
-
-    // Counter IDs for unique identification
-    let expIdCounter = 0;
-    let projIdCounter = 0;
-    let eduIdCounter = 0;
-    let langIdCounter = 0;
 
     // ----------------------------------------------------
     // Dynamic List Management
     // ----------------------------------------------------
+    let expIdCounter = 0;
+    let projIdCounter = 0;
+    let eduIdCounter = 0;
+    let langIdCounter = 0;
+    let volIdCounter = 0;
+    let certIdCounter = 0;
 
     function createDynamicItemContainer(id, innerHtml) {
         return `
             <div class="dynamic-item" id="${id}">
                 <div class="item-controls">
-                    <button type="button" class="btn-item-control btn-move-up" data-i18n-title="tt_up" title="Subir"><i data-lucide="arrow-up"></i></button>
-                    <button type="button" class="btn-item-control btn-move-down" data-i18n-title="tt_down" title="Bajar"><i data-lucide="arrow-down"></i></button>
-                    <button type="button" class="btn-item-control btn-remove-item" data-i18n-title="tt_remove_item" title="Eliminar"><i data-lucide="x"></i></button>
+                    <button type="button" class="btn-item-control btn-move-up" data-i18n-title="tt_up" data-i18n-aria="tt_up" title="Subir" aria-label="Subir"><i data-lucide="arrow-up"></i></button>
+                    <button type="button" class="btn-item-control btn-move-down" data-i18n-title="tt_down" data-i18n-aria="tt_down" title="Bajar" aria-label="Bajar"><i data-lucide="arrow-down"></i></button>
+                    <button type="button" class="btn-item-control btn-remove-item" data-i18n-title="tt_remove_item" data-i18n-aria="tt_remove_item" title="Eliminar" aria-label="Eliminar"><i data-lucide="x"></i></button>
                 </div>
                 ${innerHtml}
             </div>
         `;
     }
 
-    // While > 0, adding items skips the per-item refresh (icons, translations, preview, save).
+    // While > 0, adding items skips the per-item refresh (icons, translations, preview).
     // runBulk() does a single refresh at the end instead of one per item.
     let bulkDepth = 0;
     function runBulk(fn) {
@@ -223,7 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             bulkDepth--;
         }
         if (bulkDepth === 0) {
-            safeCreateIcons();
+            createIcons();
             updateLanguage(getCurrentLanguage());
         }
     }
@@ -233,86 +193,123 @@ document.addEventListener('DOMContentLoaded', () => {
         listElement.insertAdjacentHTML('beforeend', createDynamicItemContainer(id, innerHtml));
         setupItemListeners(id);
         if (bulkDepth === 0) {
-            safeCreateIcons();
-            updatePreview();
+            createIcons();
+            updateLanguage(getCurrentLanguage());
         }
     }
 
-    // Add Work Experience Form Group
+    function clearDynamicLists() {
+        dynamicLists.forEach(list => { if (list) list.innerHTML = ''; });
+    }
+
     function addExperienceField(data = {}) {
         data = data || {};
         const id = `exp-${expIdCounter++}`;
-        const innerHtml = `
+        appendDynamicField(experienceList, id, `
                 <div class="form-group grid-2">
-                    <label data-i18n="lbl_exp_role">Puesto / Cargo</label>
-                    <input type="text" class="exp-role" data-i18n="ph_exp_role" value="${escapeHtml(data.role)}" placeholder="Ej. Desarrollador Web Prácticas">
+                    <label for="${id}-role" data-i18n="lbl_exp_role">Puesto / Cargo</label>
+                    <input type="text" id="${id}-role" class="exp-role" data-i18n="ph_exp_role" value="${escapeHtml(data.role)}" placeholder="Ej. Desarrollador Web Prácticas">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_exp_company">Empresa</label>
-                    <input type="text" class="exp-company" data-i18n="ph_exp_company" value="${escapeHtml(data.company)}" placeholder="Ej. Innova Soft S.L.">
+                    <label for="${id}-company" data-i18n="lbl_exp_company">Empresa</label>
+                    <input type="text" id="${id}-company" class="exp-company" data-i18n="ph_exp_company" value="${escapeHtml(data.company)}" placeholder="Ej. Innova Soft S.L.">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_exp_dates">Periodo (Fechas)</label>
-                    <input type="text" class="exp-dates" data-i18n="ph_exp_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. Ene 2025 - Mar 2026">
+                    <label for="${id}-dates" data-i18n="lbl_exp_dates">Periodo (Fechas)</label>
+                    <input type="text" id="${id}-dates" class="exp-dates" data-i18n="ph_exp_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. Ene 2025 - Mar 2026">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_exp_desc">Descripción / Logros</label>
-                    <textarea class="exp-desc bullet-textarea" data-i18n="ph_exp_desc" rows="3" placeholder="Ej. Desarrollo de APIs en Java, diseño de vistas responsivas...">${escapeHtml(data.desc)}</textarea>
+                    <label for="${id}-desc" data-i18n="lbl_exp_desc">Descripción / Logros</label>
+                    <textarea id="${id}-desc" class="exp-desc bullet-textarea" data-i18n="ph_exp_desc" rows="3" placeholder="Ej. Desarrollo de APIs en Java, diseño de vistas responsivas...">${escapeHtml(data.desc)}</textarea>
                 </div>
-        `;
-        appendDynamicField(experienceList, id, innerHtml);
-        if (bulkDepth === 0) updateLanguage(getCurrentLanguage());
+        `);
     }
 
-    // Add Project Form Group
     function addProjectField(data = {}) {
         data = data || {};
         const id = `proj-${projIdCounter++}`;
-        const innerHtml = `
+        appendDynamicField(projectsList, id, `
                 <div class="form-group">
-                    <label data-i18n="lbl_proj_name">Nombre del Proyecto</label>
-                    <input type="text" class="proj-title" data-i18n="ph_proj_name" value="${escapeHtml(data.title)}" placeholder="Ej. E-commerce App">
+                    <label for="${id}-title" data-i18n="lbl_proj_name">Nombre del Proyecto</label>
+                    <input type="text" id="${id}-title" class="proj-title" data-i18n="ph_proj_name" value="${escapeHtml(data.title)}" placeholder="Ej. E-commerce App">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_proj_tech">Tecnologías (Separadas por comas)</label>
-                    <input type="text" class="proj-tech" data-i18n="ph_proj_tech" value="${escapeHtml(data.tech)}" placeholder="Ej. Flutter, Firebase, Dart">
+                    <label for="${id}-tech" data-i18n="lbl_proj_tech">Tecnologías (Separadas por comas)</label>
+                    <input type="text" id="${id}-tech" class="proj-tech" data-i18n="ph_proj_tech" value="${escapeHtml(data.tech)}" placeholder="Ej. Flutter, Firebase, Dart">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_proj_desc">Descripción</label>
-                    <textarea class="proj-desc" rows="2" data-i18n="ph_proj_desc" placeholder="Ej. Aplicación móvil de gestión logística con base de datos local y offline...">${escapeHtml(data.desc)}</textarea>
+                    <label for="${id}-desc" data-i18n="lbl_proj_desc">Descripción</label>
+                    <textarea id="${id}-desc" class="proj-desc" rows="2" data-i18n="ph_proj_desc" placeholder="Ej. Aplicación móvil de gestión logística con base de datos local y offline...">${escapeHtml(data.desc)}</textarea>
                 </div>
-        `;
-        appendDynamicField(projectsList, id, innerHtml);
-        if (bulkDepth === 0) updateLanguage(getCurrentLanguage());
+        `);
     }
 
-    // Add Education Form Group
     function addEducationField(data = {}) {
         data = data || {};
         const id = `edu-${eduIdCounter++}`;
-        const innerHtml = `
+        appendDynamicField(educationList, id, `
                 <div class="form-group">
-                    <label data-i18n="lbl_edu_degree">Titulación / Grado / Certificación</label>
-                    <input type="text" class="edu-degree" data-i18n="ph_edu_degree" value="${escapeHtml(data.degree)}" placeholder="Ej. C.F.G.S. Desarrollo de Aplicaciones Web">
+                    <label for="${id}-degree" data-i18n="lbl_edu_degree">Titulación / Grado / Certificación</label>
+                    <input type="text" id="${id}-degree" class="edu-degree" data-i18n="ph_edu_degree" value="${escapeHtml(data.degree)}" placeholder="Ej. C.F.G.S. Desarrollo de Aplicaciones Web">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_edu_school">Centro de Estudios / Institución</label>
-                    <input type="text" class="edu-school" data-i18n="ph_edu_school" value="${escapeHtml(data.school)}" placeholder="Ej. I.E.S. Tecnológico">
+                    <label for="${id}-school" data-i18n="lbl_edu_school">Centro de Estudios / Institución</label>
+                    <input type="text" id="${id}-school" class="edu-school" data-i18n="ph_edu_school" value="${escapeHtml(data.school)}" placeholder="Ej. I.E.S. Tecnológico">
                 </div>
                 <div class="form-group">
-                    <label data-i18n="lbl_edu_dates">Periodo (Fechas)</label>
-                    <input type="text" class="edu-dates" data-i18n="ph_edu_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2024 - 2026">
+                    <label for="${id}-dates" data-i18n="lbl_edu_dates">Periodo (Fechas)</label>
+                    <input type="text" id="${id}-dates" class="edu-dates" data-i18n="ph_edu_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2024 - 2026">
                 </div>
-        `;
-        appendDynamicField(educationList, id, innerHtml);
-        if (bulkDepth === 0) updateLanguage(getCurrentLanguage());
+        `);
     }
 
-    // Set the single comma-separated skills field
+    function addVolunteerField(data = {}) {
+        data = data || {};
+        const id = `vol-${volIdCounter++}`;
+        appendDynamicField(volunteerList, id, `
+                <div class="form-group">
+                    <label for="${id}-role" data-i18n="lbl_vol_role">Rol / Actividad</label>
+                    <input type="text" id="${id}-role" class="vol-role" data-i18n="ph_vol_role" value="${escapeHtml(data.role)}" placeholder="Ej. Mentor de jóvenes">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-org" data-i18n="lbl_vol_org">Organización</label>
+                    <input type="text" id="${id}-org" class="vol-org" data-i18n="ph_vol_org" value="${escapeHtml(data.organization)}" placeholder="Ej. Cruz Roja">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-dates" data-i18n="lbl_vol_dates">Periodo (Fechas)</label>
+                    <input type="text" id="${id}-dates" class="vol-dates" data-i18n="ph_vol_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2022 - Actualidad">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-desc" data-i18n="lbl_vol_desc">Descripción / Logros</label>
+                    <textarea id="${id}-desc" class="vol-desc bullet-textarea" rows="2" data-i18n="ph_vol_desc" placeholder="Ej. Talleres de orientación laboral para jóvenes...">${escapeHtml(data.desc)}</textarea>
+                </div>
+        `);
+    }
+
+    function addCertificationField(data = {}) {
+        data = data || {};
+        const id = `cert-${certIdCounter++}`;
+        appendDynamicField(certificationsList, id, `
+                <div class="form-group">
+                    <label for="${id}-name" data-i18n="lbl_cert_name">Certificación / Curso</label>
+                    <input type="text" id="${id}-name" class="cert-name" data-i18n="ph_cert_name" value="${escapeHtml(data.name)}" placeholder="Ej. AWS Certified Cloud Practitioner">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-issuer" data-i18n="lbl_cert_issuer">Entidad emisora</label>
+                    <input type="text" id="${id}-issuer" class="cert-issuer" data-i18n="ph_cert_issuer" value="${escapeHtml(data.issuer)}" placeholder="Ej. Amazon Web Services">
+                </div>
+                <div class="form-group">
+                    <label for="${id}-date" data-i18n="lbl_cert_date">Fecha</label>
+                    <input type="text" id="${id}-date" class="cert-date" data-i18n="ph_cert_date" value="${escapeHtml(data.date)}" placeholder="Ej. Mayo 2025">
+                </div>
+        `);
+    }
+
+    // The single comma-separated skills field
     function setSkillsField(name = '') {
         skillsList.innerHTML = `
             <div class="form-group">
-                <label data-i18n="lbl_skill_name">Habilidad / Tecnología (Separadas por comas)</label>
+                <label for="input-skills" data-i18n="lbl_skill_name">Habilidad / Tecnología (Separadas por comas)</label>
                 <input type="text" id="input-skills" class="skill-name" data-i18n="ph_skill_name" value="${escapeHtml(name)}" placeholder="Ej. Liderazgo, React, Excel">
             </div>
         `;
@@ -320,83 +317,73 @@ document.addEventListener('DOMContentLoaded', () => {
         if (bulkDepth === 0) updateLanguage(getCurrentLanguage());
     }
 
-    // Add Language Form Group
     function addLanguageField(name = '', level = 'Básico') {
         level = normalizeLevel(level);
         const id = `lang-${langIdCounter++}`;
-        const innerHtml = `
+        const option = (value, key) =>
+            `<option value="${value}" data-i18n="${key}" ${level === value ? 'selected' : ''}>${value}</option>`;
+        appendDynamicField(languagesList, id, `
                 <div class="form-group grid-2">
                     <div>
-                        <label data-i18n="lbl_lang_name">Idioma</label>
-                        <input type="text" class="lang-name" data-i18n="ph_lang_name" value="${escapeHtml(name)}" placeholder="Ej. Inglés">
+                        <label for="${id}-name" data-i18n="lbl_lang_name">Idioma</label>
+                        <input type="text" id="${id}-name" class="lang-name" data-i18n="ph_lang_name" value="${escapeHtml(name)}" placeholder="Ej. Inglés">
                     </div>
                     <div>
-                        <label data-i18n="lbl_lang_level">Nivel</label>
-                        <select class="lang-level">
-                            <option value="Básico" data-i18n="opt_basic" ${level === 'Básico' ? 'selected' : ''}>Básico</option>
-                            <option value="Intermedio" data-i18n="opt_intermediate" ${level === 'Intermedio' ? 'selected' : ''}>Intermedio</option>
-                            <option value="Avanzado" data-i18n="opt_advanced" ${level === 'Avanzado' ? 'selected' : ''}>Avanzado</option>
-                            <option value="Bilingüe" data-i18n="opt_bilingual" ${level === 'Bilingüe' ? 'selected' : ''}>Bilingüe</option>
-                            <option value="Nativo" data-i18n="opt_native" ${level === 'Nativo' ? 'selected' : ''}>Nativo</option>
+                        <label for="${id}-level" data-i18n="lbl_lang_level">Nivel</label>
+                        <select id="${id}-level" class="lang-level">
+                            ${Object.entries(LEVEL_LABEL_KEYS).map(([value, key]) => option(value, key)).join('')}
                         </select>
                     </div>
                 </div>
-        `;
-        appendDynamicField(languagesList, id, innerHtml);
-        if (bulkDepth === 0) updateLanguage(getCurrentLanguage());
+        `);
     }
 
-    // Attach the shared interactions for a dynamic form item.
     function setupItemListeners(itemId) {
-        const item = document.getElementById(itemId);
+        const item = $(itemId);
         if (!item) return;
-        
-        // Listen to change inputs
-        const inputs = item.querySelectorAll('input, textarea, select');
-        inputs.forEach(input => {
+
+        item.querySelectorAll('input, textarea, select').forEach(input => {
             input.addEventListener('input', updatePreview);
         });
 
-        // Listen to delete button
-        const deleteBtn = item.querySelector('.btn-remove-item');
-        if (deleteBtn) {
-            deleteBtn.addEventListener('click', () => {
-                item.classList.add('removing');
-                // Wait for potential CSS animations before deleting
-                setTimeout(() => {
-                    item.remove();
-                    updatePreview();
-                }, 150);
-            });
-        }
+        item.querySelector('.btn-remove-item')?.addEventListener('click', () => {
+            item.classList.add('removing');
+            setTimeout(() => {
+                item.remove();
+                updatePreview();
+            }, 150);
+        });
 
-        // Listen to move up button
-        const moveUpBtn = item.querySelector('.btn-move-up');
-        if (moveUpBtn) {
-            moveUpBtn.addEventListener('click', () => {
-                const prev = item.previousElementSibling;
-                if (prev) {
-                    item.parentNode.insertBefore(item, prev);
-                    updatePreview();
-                }
-            });
-        }
+        item.querySelector('.btn-move-up')?.addEventListener('click', () => {
+            const prev = item.previousElementSibling;
+            if (prev) {
+                item.parentNode.insertBefore(item, prev);
+                updatePreview();
+            }
+        });
 
-        // Listen to move down button
-        const moveDownBtn = item.querySelector('.btn-move-down');
-        if (moveDownBtn) {
-            moveDownBtn.addEventListener('click', () => {
-                const next = item.nextElementSibling;
-                if (next) {
-                    item.parentNode.insertBefore(next, item);
-                    updatePreview();
-                }
-            });
-        }
+        item.querySelector('.btn-move-down')?.addEventListener('click', () => {
+            const next = item.nextElementSibling;
+            if (next) {
+                item.parentNode.insertBefore(next, item);
+                updatePreview();
+            }
+        });
     }
 
+    [
+        ['btn-add-experience', addExperienceField],
+        ['btn-add-project', addProjectField],
+        ['btn-add-education', addEducationField],
+        ['btn-add-language', addLanguageField],
+        ['btn-add-volunteer', addVolunteerField],
+        ['btn-add-certification', addCertificationField]
+    ].forEach(([buttonId, addField]) => {
+        $(buttonId)?.addEventListener('click', () => addField());
+    });
+
     // ----------------------------------------------------
-    // Photo Upload Logic
+    // Photo Upload
     // ----------------------------------------------------
 
     // Scales an image down (max side in px) and re-encodes it as JPEG so it stays small
@@ -431,68 +418,84 @@ document.addEventListener('DOMContentLoaded', () => {
             img.src = url;
         });
     }
-    if (inputPhoto) {
-        inputPhoto.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (!file.type || !file.type.startsWith('image/')) {
-                alert(tr('alert_photo_invalid'));
-                inputPhoto.value = '';
-                return;
-            }
-            resizeImageFile(file, 400, 0.85)
-                .then(dataUrl => {
-                    currentPhoto = dataUrl;
-                    updatePreview();
-                    saveToLocalStorage();
-                })
-                .catch(() => {
-                    alert(tr('alert_photo_error'));
-                    inputPhoto.value = '';
-                });
-        });
-    }
 
-    if (btnRemovePhoto) {
-        btnRemovePhoto.addEventListener('click', () => {
-            currentPhoto = null;
+    inputPhoto?.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (!file.type || !file.type.startsWith('image/')) {
+            toast(tr('alert_photo_invalid'), 'error');
             inputPhoto.value = '';
-            updatePreview();
-            saveToLocalStorage();
-        });
-    }
+            return;
+        }
+        resizeImageFile(file, 400, 0.85)
+            .then(dataUrl => {
+                currentPhoto = dataUrl;
+                updatePreview();
+                saveNow();
+            })
+            .catch(() => {
+                toast(tr('alert_photo_error'), 'error');
+                inputPhoto.value = '';
+            });
+    });
+
+    btnRemovePhoto?.addEventListener('click', () => {
+        currentPhoto = null;
+        inputPhoto.value = '';
+        updatePreview();
+        saveNow();
+    });
 
     // ----------------------------------------------------
-    // Update Preview Logic
+    // Preview rendering
     // ----------------------------------------------------
-
     function updatePhotoPreview() {
         if (currentPhoto) {
             previewPhoto.src = currentPhoto;
-            previewPhoto.style.display = 'block';
-            if(btnRemovePhoto) btnRemovePhoto.style.display = 'inline-flex';
+            previewPhoto.alt = inputFullname.value.trim();
+            previewPhoto.hidden = false;
+            if (btnRemovePhoto) btnRemovePhoto.hidden = false;
         } else {
-            previewPhoto.src = '';
-            previewPhoto.style.display = 'none';
-            if(btnRemovePhoto) btnRemovePhoto.style.display = 'none';
-            if(inputPhoto) inputPhoto.value = '';
+            previewPhoto.removeAttribute('src');
+            previewPhoto.hidden = true;
+            if (btnRemovePhoto) btnRemovePhoto.hidden = true;
+            if (inputPhoto) inputPhoto.value = '';
         }
     }
 
     function updateSectionTitlesPreview() {
-        if(previewTitleProfile) previewTitleProfile.textContent = inputTitleProfile.value || 'Perfil Profesional';
-        if(previewTitleExperience) previewTitleExperience.textContent = inputTitleExperience.value || 'Experiencia Laboral';
-        if(previewTitleProjects) previewTitleProjects.textContent = inputTitleProjects.value || 'Proyectos';
-        if(previewTitleEducation) previewTitleEducation.textContent = inputTitleEducation.value || 'Formación';
-        if(previewTitleSkills) previewTitleSkills.textContent = inputTitleSkills.value || 'Tecnología';
-        if(previewTitleSoftSkills) previewTitleSoftSkills.textContent = inputTitleSoftSkills.value || 'Habilidades';
-        if(previewTitleLanguages) previewTitleLanguages.textContent = inputTitleLanguages.value || 'Idiomas';
+        const t = getTranslations();
+        Object.entries(SECTION_TITLE_DEFAULTS).forEach(([section, [inputId, key]]) => {
+            const span = document.querySelector(`#preview-title-${section}-header span`);
+            if (span) span.textContent = $(inputId).value || t[key];
+        });
+    }
+
+    function setText(id, value, fallback) {
+        $(id).textContent = value.trim() !== '' ? value : fallback;
+    }
+
+    function setContact(id, containerId, value, type = 'text') {
+        const container = $(containerId);
+        const trimmed = value.trim();
+        container.hidden = trimmed === '';
+        if (!trimmed) return;
+        const el = $(id);
+        el.textContent = trimmed;
+        if (el.tagName !== 'A') return;
+        if (type === 'email') {
+            el.href = 'mailto:' + trimmed;
+        } else if (type === 'phone') {
+            el.href = 'tel:' + trimmed.replace(/[^\d+]/g, '');
+        } else if (type === 'url') {
+            el.href = toSafeUrl(trimmed);
+        }
     }
 
     function updateTextAndContactPreview() {
         const t = getTranslations();
 
-        // 1. Personal Info
+        // Long names break after the second word so the header stays balanced
         let nameToDisplay = inputFullname.value.trim();
         const nameWords = nameToDisplay.split(/\s+/);
         if (nameWords.length > 2) {
@@ -502,7 +505,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setText('preview-title', inputTitle.value, t.lbl_title);
         setText('preview-summary', inputSummary.value, t.lbl_summary + '...');
 
-        // 2. Contacts
         setContact('preview-email', 'cv-contact-email-container', inputEmail.value, 'email');
         setContact('preview-phone', 'cv-contact-phone-container', inputPhone.value, 'phone');
         setContact('preview-location', 'cv-contact-location-container', inputLocation.value, 'text');
@@ -527,9 +529,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function buildProjectHtml(title, techString, desc) {
         const techBadges = parseCommaSeparated(techString)
-            .map(t => `<span class="cv-badge-tech">${escapeHtml(t)}</span>`)
+            .map(tech => `<span class="cv-badge-tech">${escapeHtml(tech)}</span>`)
             .join('');
-
         return `
             <div class="cv-item-block">
                 <div class="cv-item-header">
@@ -552,143 +553,179 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
-    function updateExperiencePreview() {
-        const experienceContainer = document.getElementById('preview-experience');
-        const expItems = experienceList.querySelectorAll('.dynamic-item');
-        const expSection = document.getElementById('cv-section-experience');
-        
-        if (expItems.length === 0) {
-            expSection.style.display = 'none';
-        } else {
-            expSection.style.display = 'flex';
-            experienceContainer.innerHTML = '';
-            expItems.forEach(item => {
-                const role = item.querySelector('.exp-role').value;
-                const company = item.querySelector('.exp-company').value;
-                const dates = item.querySelector('.exp-dates').value;
-                const desc = item.querySelector('.exp-desc').value;
+    function buildVolunteerHtml(role, organization, dates, desc) {
+        return `
+            <div class="cv-item-block">
+                <div class="cv-item-header">
+                    <div class="cv-item-title">${escapeHtml(role)}</div>
+                    <div class="cv-item-meta">${escapeHtml(organization)}</div>
+                </div>
+                ${dates.trim() ? `<div class="cv-item-dates">${escapeHtml(dates)}</div>` : ''}
+                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
+            </div>
+        `;
+    }
 
-                if (role || company) {
-                    experienceContainer.insertAdjacentHTML('beforeend', buildExperienceHtml(role, company, dates, desc));
-                }
-            });
+    function buildCertificationHtml(name, issuer, date) {
+        return `
+            <div class="cv-item-block">
+                <div class="cv-item-title">${escapeHtml(name)}</div>
+                ${issuer.trim() ? `<div class="cv-item-meta">${escapeHtml(issuer)}</div>` : ''}
+                ${date.trim() ? `<div class="cv-item-dates">${escapeHtml(date)}</div>` : ''}
+            </div>
+        `;
+    }
+
+    // Renders one dynamic list into its preview container; hides the section when the list is empty.
+    function renderListPreview(list, sectionId, containerId, readItem, buildHtml) {
+        const items = list.querySelectorAll('.dynamic-item');
+        const section = $(sectionId);
+        if (items.length === 0) {
+            section.style.display = 'none';
+            $(containerId).innerHTML = '';
+            return;
         }
+        section.style.display = 'flex';
+        $(containerId).innerHTML = Array.from(items)
+            .map(readItem)
+            .filter(Boolean)
+            .map(values => buildHtml(...values))
+            .join('');
+    }
+
+    const val = (item, selector) => item.querySelector(selector).value;
+
+    function updateExperiencePreview() {
+        renderListPreview(experienceList, 'cv-section-experience', 'preview-experience', item => {
+            const values = [val(item, '.exp-role'), val(item, '.exp-company'), val(item, '.exp-dates'), val(item, '.exp-desc')];
+            return values[0] || values[1] ? values : null;
+        }, buildExperienceHtml);
     }
 
     function updateProjectsPreview() {
-        const projectsContainer = document.getElementById('preview-projects');
-        const projItems = projectsList.querySelectorAll('.dynamic-item');
-        const projSection = document.getElementById('cv-section-projects');
-
-        if (projItems.length === 0) {
-            projSection.style.display = 'none';
-        } else {
-            projSection.style.display = 'flex';
-            projectsContainer.innerHTML = '';
-            projItems.forEach(item => {
-                const title = item.querySelector('.proj-title').value;
-                const techString = item.querySelector('.proj-tech').value;
-                const desc = item.querySelector('.proj-desc').value;
-
-                if (title) {
-                    projectsContainer.insertAdjacentHTML('beforeend', buildProjectHtml(title, techString, desc));
-                }
-            });
-        }
+        renderListPreview(projectsList, 'cv-section-projects', 'preview-projects', item => {
+            const values = [val(item, '.proj-title'), val(item, '.proj-tech'), val(item, '.proj-desc')];
+            return values[0] ? values : null;
+        }, buildProjectHtml);
     }
 
     function updateEducationPreview() {
-        const educationContainer = document.getElementById('preview-education');
-        const eduItems = educationList.querySelectorAll('.dynamic-item');
-        const eduSection = document.getElementById('cv-section-education');
+        renderListPreview(educationList, 'cv-section-education', 'preview-education', item => {
+            const values = [val(item, '.edu-degree'), val(item, '.edu-school'), val(item, '.edu-dates')];
+            return values[0] || values[1] ? values : null;
+        }, buildEducationHtml);
+    }
 
-        if (eduItems.length === 0) {
-            eduSection.style.display = 'none';
-        } else {
-            eduSection.style.display = 'flex';
-            educationContainer.innerHTML = '';
-            eduItems.forEach(item => {
-                const degree = item.querySelector('.edu-degree').value;
-                const school = item.querySelector('.edu-school').value;
-                const dates = item.querySelector('.edu-dates').value;
+    function updateVolunteerPreview() {
+        renderListPreview(volunteerList, 'cv-section-volunteer', 'preview-volunteer', item => {
+            const values = [val(item, '.vol-role'), val(item, '.vol-org'), val(item, '.vol-dates'), val(item, '.vol-desc')];
+            return values[0] || values[1] ? values : null;
+        }, buildVolunteerHtml);
+    }
 
-                if (degree || school) {
-                    educationContainer.insertAdjacentHTML('beforeend', buildEducationHtml(degree, school, dates));
-                }
-            });
-        }
+    function updateCertificationsPreview() {
+        renderListPreview(certificationsList, 'cv-section-certifications', 'preview-certifications', item => {
+            const values = [val(item, '.cert-name'), val(item, '.cert-issuer'), val(item, '.cert-date')];
+            return values[0] ? values : null;
+        }, buildCertificationHtml);
+    }
+
+    function getSkillNames() {
+        const skillsInput = skillsList.querySelector('.skill-name');
+        return skillsInput ? parseCommaSeparated(skillsInput.value) : [];
     }
 
     function updateSkillsPreview() {
-        const skillsInput = skillsList.querySelector('.skill-name');
-        const skillNames = skillsInput ? parseCommaSeparated(skillsInput.value) : [];
-        const skillsSection = document.getElementById('cv-section-skills');
-        
+        const skillNames = getSkillNames();
+        const skillsSection = $('cv-section-skills');
         if (skillNames.length === 0) {
             skillsSection.style.display = 'none';
-        } else {
-            skillsSection.style.display = 'flex';
-            if (previewSkillsDynamic) {
-                previewSkillsDynamic.innerHTML = '';
-                const tagsContainer = document.createElement('div');
-                tagsContainer.className = 'cv-tags';
-                
-                skillNames.forEach(name => {
-                    const skillHtml = `<span class="cv-tag">${escapeHtml(name)}</span>`;
-                    tagsContainer.insertAdjacentHTML('beforeend', skillHtml);
-                });
-                previewSkillsDynamic.appendChild(tagsContainer);
-            }
+            return;
         }
+        skillsSection.style.display = 'flex';
+        previewSkillsDynamic.innerHTML = `<div class="cv-tags">${
+            skillNames.map(name => `<span class="cv-tag">${escapeHtml(name)}</span>`).join('')
+        }</div>`;
     }
 
     function updateSoftSkillsPreview() {
         const text = inputSoftSkillsDesc.value;
-        const softSkillsSection = document.getElementById('cv-section-softskills');
+        const softSkillsSection = $('cv-section-softskills');
         if (!hasRealText(text)) {
             softSkillsSection.style.display = 'none';
-        } else {
-            softSkillsSection.style.display = 'flex';
-            if(previewSoftSkillsDesc) {
-                previewSoftSkillsDesc.innerHTML = formatDescHtml(text);
-            }
+            return;
         }
+        softSkillsSection.style.display = 'flex';
+        previewSoftSkillsDesc.innerHTML = formatDescHtml(text);
     }
 
     function updateLanguagesPreview() {
-        if (previewLanguagesList) {
-            previewLanguagesList.innerHTML = '';
-            let hasLangs = false;
-            
-            const langItems = document.querySelectorAll('#languages-list .dynamic-item');
-            langItems.forEach(item => {
-                const name = item.querySelector('.lang-name').value.trim();
-                const level = item.querySelector('.lang-level').value.trim();
+        const t = getTranslations();
+        const langItems = languagesList.querySelectorAll('.dynamic-item');
+        previewLanguagesList.innerHTML = '';
+        langItems.forEach(item => {
+            const name = val(item, '.lang-name').trim();
+            if (!name) return;
+            const level = val(item, '.lang-level').trim();
+            const langDiv = document.createElement('div');
+            langDiv.className = 'cv-language-row';
+            const strong = document.createElement('strong');
+            strong.textContent = name + ':';
+            langDiv.append(strong, ' ' + (t[LEVEL_LABEL_KEYS[level]] || level));
+            previewLanguagesList.appendChild(langDiv);
+        });
+        $('cv-section-languages').style.display = langItems.length === 0 ? 'none' : 'block';
+    }
 
-                if (name) {
-                    hasLangs = true;
-                    const langDiv = document.createElement('div');
-                    langDiv.style.marginBottom = '5px';
-                    const currentLang = getCurrentLanguage();
-                    const tl = getTranslations();
-                    const levelLabel = tl[LEVEL_LABEL_KEYS[level]] || level;
-                    const strong = document.createElement('strong');
-                    strong.textContent = name + ':';
-                    langDiv.appendChild(strong);
-                    langDiv.appendChild(document.createTextNode(' ' + levelLabel));
-                    previewLanguagesList.appendChild(langDiv);
-                }
+    function updateDynamicControlsState() {
+        document.querySelectorAll('.dynamic-list').forEach(list => {
+            const items = list.querySelectorAll('.dynamic-item');
+            items.forEach((item, index) => {
+                const upBtn = item.querySelector('.btn-move-up');
+                const downBtn = item.querySelector('.btn-move-down');
+                if (upBtn) upBtn.disabled = index === 0;
+                if (downBtn) downBtn.disabled = index === items.length - 1;
             });
+        });
+    }
 
-            const langSection = document.getElementById('cv-section-languages');
-            if (langSection) {
-                if (!hasLangs && langItems.length === 0) {
-                    langSection.style.display = 'none';
-                } else {
-                    langSection.style.display = 'block';
-                }
-            }
+    function isSectionEnabled(sectionId) {
+        const toggle = document.querySelector(`.section-toggle[data-section="${sectionId}"]`);
+        return !toggle || toggle.checked;
+    }
+
+    // Progress bar telling the user which essential fields are still missing
+    function updateCompleteness() {
+        const bar = $('completeness-bar');
+        if (!bar) return;
+        const t = getTranslations();
+        const anyItem = (list, selectors) => Array.from(list.querySelectorAll('.dynamic-item'))
+            .some(item => selectors.some(sel => val(item, sel).trim()));
+
+        const checks = [
+            ['chk_name', inputFullname.value.trim()],
+            ['chk_title', inputTitle.value.trim()],
+            ['chk_email', inputEmail.value.trim()],
+            ['chk_phone', inputPhone.value.trim()]
+        ];
+        if (isSectionEnabled('cv-section-summary')) checks.push(['chk_summary', inputSummary.value.trim()]);
+        if (isSectionEnabled('cv-section-experience')) checks.push(['chk_experience', anyItem(experienceList, ['.exp-role', '.exp-company'])]);
+        if (isSectionEnabled('cv-section-education')) checks.push(['chk_education', anyItem(educationList, ['.edu-degree', '.edu-school'])]);
+        if (isSectionEnabled('cv-section-skills') || isSectionEnabled('cv-section-softskills')) {
+            checks.push(['chk_skills', getSkillNames().length > 0 || hasRealText(inputSoftSkillsDesc.value)]);
         }
+        if (isSectionEnabled('cv-section-languages')) checks.push(['chk_languages', anyItem(languagesList, ['.lang-name'])]);
+
+        const missing = checks.filter(([, ok]) => !ok).map(([key]) => t[key]);
+        const pct = Math.round(((checks.length - missing.length) / checks.length) * 100);
+
+        bar.setAttribute('aria-valuenow', String(pct));
+        $('completeness-fill').style.width = pct + '%';
+        $('cv-completeness').classList.toggle('is-complete', missing.length === 0);
+        const label = t.completeness_label.replace('{pct}', pct);
+        $('completeness-text').textContent = missing.length === 0
+            ? `${label} · ${t.completeness_done}`
+            : `${label} · ${t.completeness_missing.replace('{items}', missing.join(', '))}`;
     }
 
     function updatePreview() {
@@ -698,249 +735,276 @@ document.addEventListener('DOMContentLoaded', () => {
         updateExperiencePreview();
         updateProjectsPreview();
         updateEducationPreview();
+        updateVolunteerPreview();
+        updateCertificationsPreview();
         updateSkillsPreview();
         updateSoftSkillsPreview();
         updateLanguagesPreview();
         updateDynamicControlsState();
-        saveToLocalStorage();
+        updateCompleteness();
+        scheduleSave();
     }
 
-    // Disables Move Up for the first item and Move Down for the last item
-    function updateDynamicControlsState() {
-        document.querySelectorAll('.dynamic-list').forEach(list => {
-            const items = list.querySelectorAll('.dynamic-item');
-            items.forEach((item, index) => {
-                const upBtn = item.querySelector('.btn-move-up');
-                const downBtn = item.querySelector('.btn-move-down');
-                if (upBtn) upBtn.disabled = (index === 0);
-                if (downBtn) downBtn.disabled = (index === items.length - 1);
-            });
-        });
-    }
-
-    // Helper functions for updating UI
-    function setText(id, value, fallback) {
-        document.getElementById(id).textContent = value.trim() !== '' ? value : fallback;
-    }
-
-    function setContact(id, containerId, value, type = 'text') {
-        const container = document.getElementById(containerId);
-        if (value.trim() === '') {
-            container.style.display = 'none';
-        } else {
-            container.style.display = 'flex';
-            const el = document.getElementById(id);
-            el.textContent = value;
-            if (el.tagName === 'A') {
-                if (type === 'email') {
-                    el.href = 'mailto:' + value.trim();
-                } else if (type === 'phone') {
-                    el.href = 'tel:' + value.trim().replace(/\s+/g, '');
-                } else if (type === 'url') {
-                    let url = value.trim();
-                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                        url = 'https://' + url;
-                    }
-                    el.href = url;
-                }
-            }
-        }
-    }
-
-
-
-    // Bind static form fields to input events
     [
         inputFullname, inputTitle, inputEmail, inputPhone, inputLink,
         inputLinkedin, inputWebsite, inputLocation, inputSummary,
-        inputTitleProfile, inputTitleExperience, inputTitleProjects, inputTitleEducation, inputTitleSkills, inputTitleSoftSkills, inputSoftSkillsDesc, inputTitleLanguages
-    ].filter(Boolean).forEach(element => {
-        element.addEventListener('input', updatePreview);
-    });
+        inputTitleProfile, inputTitleExperience, inputTitleProjects, inputTitleEducation,
+        inputTitleSkills, inputTitleSoftSkills, inputSoftSkillsDesc, inputTitleLanguages
+    ].filter(Boolean).forEach(element => element.addEventListener('input', updatePreview));
 
     // ----------------------------------------------------
-    // Dynamic List Button Actions
+    // Dropdowns (Theme, Template, Language) - mouse + keyboard
     // ----------------------------------------------------
-    [
-        [btnAddExperience, addExperienceField],
-        [btnAddProject, addProjectField],
-        [btnAddEducation, addEducationField],
-        [btnAddLanguage, addLanguageField]
-    ].forEach(([button, addField]) => {
-        if (button) button.addEventListener('click', () => addField());
-    });
+    const dropdownContainers = Array.from(document.querySelectorAll('.custom-dropdown'));
+    const getOptions = container => Array.from(container.querySelectorAll('.dropdown-item'));
 
-    // ----------------------------------------------------
-    // Dropdowns Logic (Theme, Template, Language)
-    // ----------------------------------------------------
-    const dropdownContainers = document.querySelectorAll('.custom-dropdown');
+    function closeDropdown(container, { focusHeader = false } = {}) {
+        if (!container.classList.contains('open')) return;
+        container.classList.remove('open');
+        const header = container.querySelector('.dropdown-header');
+        header.setAttribute('aria-expanded', 'false');
+        if (focusHeader) header.focus();
+    }
 
-    // Generic Dropdown Toggle
+    function openDropdown(container, { focusOption = false } = {}) {
+        dropdownContainers.forEach(c => { if (c !== container) closeDropdown(c); });
+        container.classList.add('open');
+        container.querySelector('.dropdown-header').setAttribute('aria-expanded', 'true');
+        if (focusOption) {
+            const options = getOptions(container);
+            (options.find(o => o.classList.contains('active')) || options[0])?.focus();
+        }
+    }
+
+    function markActiveOption(container, option) {
+        getOptions(container).forEach(o => {
+            const active = o === option;
+            o.classList.toggle('active', active);
+            o.setAttribute('aria-selected', String(active));
+        });
+    }
+
     dropdownContainers.forEach(container => {
         const header = container.querySelector('.dropdown-header');
-        if (header) {
-            header.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Close others
-                dropdownContainers.forEach(c => {
-                    if (c !== container) c.classList.remove('open');
-                });
-                container.classList.toggle('open');
-            });
+        const menu = container.querySelector('.dropdown-menu');
+
+        header.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (container.classList.contains('open')) {
+                closeDropdown(container);
+            } else {
+                // e.detail === 0 means keyboard activation: move focus into the list
+                openDropdown(container, { focusOption: e.detail === 0 });
+            }
+        });
+
+        header.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                openDropdown(container, { focusOption: true });
+            } else if (e.key === 'Escape') {
+                closeDropdown(container);
+            }
+        });
+
+        menu.addEventListener('keydown', (e) => {
+            const options = getOptions(container);
+            const index = options.indexOf(document.activeElement);
+            const focusAt = i => options[(i + options.length) % options.length].focus();
+            switch (e.key) {
+                case 'ArrowDown': e.preventDefault(); focusAt(index + 1); break;
+                case 'ArrowUp': e.preventDefault(); focusAt(index - 1); break;
+                case 'Home': e.preventDefault(); focusAt(0); break;
+                case 'End': e.preventDefault(); focusAt(options.length - 1); break;
+                case 'Enter':
+                case ' ':
+                    e.preventDefault();
+                    document.activeElement?.click();
+                    header.focus();
+                    break;
+                case 'Escape': e.preventDefault(); closeDropdown(container, { focusHeader: true }); break;
+                case 'Tab': closeDropdown(container); break;
+            }
+        });
+    });
+
+    document.addEventListener('click', () => dropdownContainers.forEach(c => closeDropdown(c)));
+
+    const themeContainer = $('theme-dropdown-container');
+    const templateContainer = $('template-dropdown-container');
+    const langContainer = $('lang-dropdown-container');
+
+    function applyTheme(theme) {
+        const option = themeContainer.querySelector(`[data-theme="${theme}"]`)
+            || themeContainer.querySelector('[data-theme="sapphire"]');
+        theme = option.getAttribute('data-theme');
+        markActiveOption(themeContainer, option);
+        $('theme-selected-icon').className = `theme-btn theme-swatch btn-${theme} active`;
+        document.body.classList.forEach(c => { if (c.startsWith('theme-')) document.body.classList.remove(c); });
+        document.body.classList.add(`theme-${theme}`);
+        refreshDropdownLabels();
+    }
+
+    function applyTemplate(template) {
+        const option = templateContainer.querySelector(`[data-template="${template}"]`)
+            || templateContainer.querySelector('[data-template="modern"]');
+        template = option.getAttribute('data-template');
+        markActiveOption(templateContainer, option);
+        const icon = option.querySelector('svg, [data-lucide]');
+        const target = $('template-selected-text');
+        if (icon) {
+            target.replaceChildren(icon.cloneNode(true));
+            createIcons(target);
         }
-    });
-
-    document.addEventListener('click', () => {
-        dropdownContainers.forEach(c => c.classList.remove('open'));
-    });
-
-    // Theme Switcher Logic
-    const themeDropdownMenu = document.getElementById('theme-dropdown-menu');
-    const themeSelectedIcon = document.getElementById('theme-selected-icon');
-    if (themeDropdownMenu && themeSelectedIcon) {
-        const themeItems = themeDropdownMenu.querySelectorAll('.dropdown-item');
-        themeItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const theme = item.getAttribute('data-theme');
-                
-                themeItems.forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                
-                // Update header icon
-                themeSelectedIcon.className = `theme-btn btn-${theme} active`;
-                
-                // Close dropdown
-                item.closest('.custom-dropdown').classList.remove('open');
-                
-                // Apply theme
-                document.body.className = Array.from(document.body.classList)
-                    .filter(c => !c.startsWith('theme-'))
-                    .join(' ');
-                document.body.classList.add(`theme-${theme}`);
-                saveToLocalStorage();
-            });
-        });
+        document.body.classList.forEach(c => { if (c.startsWith('template-')) document.body.classList.remove(c); });
+        document.body.classList.add(`template-${template}`);
+        refreshDropdownLabels();
+        fitPreview();
     }
 
-    // Template Switcher Logic
-    const templateDropdownMenu = document.getElementById('template-dropdown-menu');
-    const templateSelectedText = document.getElementById('template-selected-text');
-    if (templateDropdownMenu && templateSelectedText) {
-        const templateItems = templateDropdownMenu.querySelectorAll('.dropdown-item');
-        templateItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const template = item.getAttribute('data-template');
-                
-                templateItems.forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                
-                // Update header icon
-                const iconElement = item.querySelector('i');
-                if (iconElement) {
-                    templateSelectedText.innerHTML = iconElement.outerHTML;
-                    // Re-initialize lucide icons for the new injected HTML
-                    if (window.lucide) {
-                        lucide.createIcons({
-                            nameAttr: 'data-lucide',
-                            root: templateSelectedText
-                        });
-                    }
-                }
-                
-                // Close dropdown
-                item.closest('.custom-dropdown').classList.remove('open');
-                
-                // Apply template
-                document.body.className = Array.from(document.body.classList)
-                    .filter(c => !c.startsWith('template-'))
-                    .join(' ');
-                document.body.classList.add(`template-${template}`);
-                saveToLocalStorage();
-            });
-        });
+    function markLanguage(lang) {
+        const option = langContainer.querySelector(`[data-lang="${lang}"]`);
+        if (!option) return;
+        markActiveOption(langContainer, option);
+        $('lang-selected-text').textContent = option.textContent.trim();
     }
 
-    // Language Switcher Logic
-    const langDropdownMenu = document.getElementById('lang-dropdown-menu');
-    const langSelectedText = document.getElementById('lang-selected-text');
-    if (langDropdownMenu && langSelectedText) {
-        const langItems = langDropdownMenu.querySelectorAll('.dropdown-item');
-        langItems.forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const lang = item.getAttribute('data-lang');
-                
-                langItems.forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                
-                langSelectedText.textContent = item.textContent;
-                item.closest('.custom-dropdown').classList.remove('open');
-                
-                // Save and apply lang
-                writeStorage(STORAGE_KEYS.language, lang);
-                updateLanguage(lang);
-                // If the untouched sample is showing, reload it in the new language
-                if (inputFullname.value === 'Alex Torto Ramos') {
-                    btnSampleData.click();
-                }
-            });
-        });
+    // Screen-reader names for the icon-only dropdown buttons
+    function refreshDropdownLabels() {
+        const activeName = container => container?.querySelector('.dropdown-item.active')?.textContent.trim() || '';
+        const themeName = $('theme-current-name');
+        const templateName = $('template-current-name');
+        if (themeName) themeName.textContent = activeName(themeContainer);
+        if (templateName) templateName.textContent = activeName(templateContainer);
     }
+
+    getOptions(themeContainer).forEach(option => option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyTheme(option.getAttribute('data-theme'));
+        closeDropdown(themeContainer);
+        saveNow();
+    }));
+
+    getOptions(templateContainer).forEach(option => option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        applyTemplate(option.getAttribute('data-template'));
+        closeDropdown(templateContainer);
+        saveNow();
+    }));
+
+    getOptions(langContainer).forEach(option => option.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const lang = option.getAttribute('data-lang');
+        closeDropdown(langContainer);
+        writeStorage(STORAGE_KEYS.language, lang);
+        markLanguage(lang);
+        updateLanguage(lang);
+        // If the untouched sample is showing, reload it in the new language
+        if (isShowingSample()) loadSample();
+    }));
 
     // ----------------------------------------------------
-    // Section Reordering
+    // Section visibility & ordering
     // ----------------------------------------------------
+    const sectionToggles = Array.from(document.querySelectorAll('.section-toggle'));
+
+    function setSectionEnabled(toggle, enabled) {
+        toggle.checked = enabled;
+        const targetSection = $(toggle.getAttribute('data-section'));
+        const accordionItem = toggle.closest('.accordion-item');
+        targetSection?.classList.toggle('hidden-section', !enabled);
+        accordionItem?.classList.toggle('section-disabled', !enabled);
+    }
+
+    sectionToggles.forEach(toggle => {
+        // Clicking the checkbox must not open/close the accordion
+        toggle.addEventListener('click', e => e.stopPropagation());
+        toggle.addEventListener('change', () => {
+            setSectionEnabled(toggle, toggle.checked);
+            updateCompleteness();
+            saveNow();
+        });
+    });
+
+    // Clicks on the drag handle / arrows inside <summary> must not toggle the accordion
+    document.querySelectorAll('.section-controls').forEach(el => {
+        el.addEventListener('click', e => e.preventDefault());
+    });
+
+    function getSectionOrder() {
+        // querySelectorAll returns document order, i.e. the current editor order
+        return Array.from(document.querySelectorAll('.section-toggle'))
+            .map(toggle => toggle.getAttribute('data-section'))
+            .filter(Boolean);
+    }
+
+    function updatePreviewSectionOrder() {
+        const orderedIds = getSectionOrder();
+        document.querySelectorAll('#cv-preview-sheet .cv-section').forEach(sec => {
+            const idx = orderedIds.indexOf(sec.id);
+            sec.style.order = idx !== -1 ? idx : 99;
+        });
+    }
+
+    function applySectionOrder(order) {
+        if (!Array.isArray(order)) return;
+        // Orders saved before a section existed don't list it: insert it after its default predecessor
+        const fullOrder = order.map(String).filter(id => DEFAULT_SECTION_ORDER.includes(id));
+        DEFAULT_SECTION_ORDER.forEach((sectionId, index) => {
+            if (fullOrder.includes(sectionId)) return;
+            const prevIndex = fullOrder.indexOf(DEFAULT_SECTION_ORDER[index - 1]);
+            fullOrder.splice(prevIndex + 1, 0, sectionId);
+        });
+        fullOrder.forEach(sectionId => {
+            const toggle = document.querySelector(`.section-toggle[data-section="${CSS.escape(String(sectionId))}"]`);
+            const item = toggle?.closest('.accordion-item');
+            if (item?.parentNode) item.parentNode.appendChild(item);
+        });
+        updatePreviewSectionOrder();
+    }
+
+    function resetSectionOrderToDefault() {
+        applySectionOrder(DEFAULT_SECTION_ORDER);
+        removeStorage(STORAGE_KEYS.sectionOrder);
+    }
+
     function moveSection(btn, direction) {
         const item = btn.closest('.accordion-item');
         if (!item) return;
-        
-        if (direction === 'up' && item.previousElementSibling && item.previousElementSibling.classList.contains('accordion-item')) {
-            if (!item.previousElementSibling.hasAttribute('data-fixed')) {
-                item.parentNode.insertBefore(item, item.previousElementSibling);
-            }
-        } else if (direction === 'down' && item.nextElementSibling && item.nextElementSibling.classList.contains('accordion-item')) {
-            item.parentNode.insertBefore(item.nextElementSibling, item);
+        const prev = item.previousElementSibling;
+        const next = item.nextElementSibling;
+        if (direction === 'up' && prev?.classList.contains('accordion-item') && !prev.hasAttribute('data-fixed')) {
+            item.parentNode.insertBefore(item, prev);
+        } else if (direction === 'down' && next?.classList.contains('accordion-item')) {
+            item.parentNode.insertBefore(next, item);
         }
-        
         updatePreviewSectionOrder();
-        saveToLocalStorage();
+        saveNow();
+        btn.focus();
     }
 
-    document.querySelectorAll('.btn-section-up').forEach(btn => {
+    document.querySelectorAll('.btn-section-up, .btn-section-down').forEach(btn => {
         btn.addEventListener('click', (e) => {
+            e.preventDefault();
             e.stopPropagation();
-            moveSection(btn, 'up');
+            moveSection(btn, btn.classList.contains('btn-section-up') ? 'up' : 'down');
         });
     });
 
-    document.querySelectorAll('.btn-section-down').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            moveSection(btn, 'down');
-        });
-    });
-
-    // ----------------------------------------------------
-    // Drag and Drop Reordering (SortableJS)
-    // ----------------------------------------------------
+    // Drag and drop reordering (SortableJS)
     const accordionContainer = document.querySelector('.editor-accordion');
     if (typeof Sortable !== 'undefined' && accordionContainer) {
         new Sortable(accordionContainer, {
             animation: 150,
-            handle: '.accordion-trigger', // Allows dragging from anywhere on the header
-            filter: '[data-fixed="true"] .accordion-trigger, input, textarea, select, button, .section-toggle', // Prevent dragging fixed items and inputs
+            handle: '.accordion-trigger',
+            filter: '[data-fixed="true"] .accordion-trigger, input, textarea, select, button, .section-toggle',
             preventOnFilter: false,
-            onMove: function (evt) {
-                // Prevent dropping above or below fixed items
-                return !evt.related.hasAttribute('data-fixed');
-            },
-            onEnd: function (evt) {
-                // Prevent accordion from toggling open/close right after drag
+            onMove: evt => !evt.related.hasAttribute('data-fixed'),
+            onEnd: evt => {
+                // Prevent the accordion from toggling right after a drag
                 const trigger = evt.item.querySelector('.accordion-trigger');
                 if (trigger) {
-                    const preventClick = function(e) {
+                    const preventClick = e => {
                         e.preventDefault();
                         e.stopPropagation();
                         trigger.removeEventListener('click', preventClick, true);
@@ -948,420 +1012,27 @@ document.addEventListener('DOMContentLoaded', () => {
                     trigger.addEventListener('click', preventClick, true);
                     setTimeout(() => trigger.removeEventListener('click', preventClick, true), 100);
                 }
-                
                 updatePreviewSectionOrder();
-                saveToLocalStorage();
+                saveNow();
             }
         });
-        
-        // Add grab cursor to all triggers that are not fixed
-        document.querySelectorAll('.accordion-item:not([data-fixed="true"]) .accordion-trigger').forEach(trigger => {
-            trigger.style.cursor = 'grab';
-        });
-    }
-
-    function updatePreviewSectionOrder() {
-        // Get ordered section IDs from the editor
-        const orderedIds = Array.from(document.querySelectorAll('.section-toggle'))
-            .map(toggle => toggle.getAttribute('data-section'))
-            .filter(id => id);
-
-        // Use Flexbox order to sort items globally or within columns
-        const allSections = document.querySelectorAll('#cv-preview-sheet .cv-section');
-        allSections.forEach(sec => {
-            const idx = orderedIds.indexOf(sec.id);
-            if (idx !== -1) {
-                sec.style.order = idx;
-            } else {
-                sec.style.order = 99;
-            }
-        });
-    }
-
-    function resetSectionOrderToDefault() {
-        const defaultOrder = [
-            'cv-section-summary',
-            'cv-section-projects',
-            'cv-section-experience',
-            'cv-section-education',
-            'cv-section-softskills',
-            'cv-section-skills',
-            'cv-section-languages'
-        ];
-        defaultOrder.forEach(sectionId => {
-            const toggle = document.querySelector(`.section-toggle[data-section="${sectionId}"]`);
-            if (toggle) {
-                const item = toggle.closest('.accordion-item');
-                if (item && item.parentNode) {
-                    item.parentNode.appendChild(item);
-                }
-            }
-        });
-        updatePreviewSectionOrder();
-            removeStorage(STORAGE_KEYS.sectionOrder);
+        document.querySelectorAll('.accordion-item:not([data-fixed="true"]) .accordion-trigger')
+            .forEach(trigger => trigger.classList.add('is-draggable'));
     }
 
     // ----------------------------------------------------
-    // Load Sample Data (For Multiplatform Developer Student)
+    // State: collect / apply / persist
     // ----------------------------------------------------
-    btnSampleData.addEventListener('click', () => runBulk(() => {
-        // Reset and enable all toggles
-        document.querySelectorAll('.section-toggle').forEach(toggle => {
-            toggle.checked = true;
-            const sectionId = toggle.getAttribute('data-section');
-            const targetSection = document.getElementById(sectionId);
-            const accordionItem = toggle.closest('.accordion-item');
-            if (targetSection) targetSection.classList.remove('hidden-section');
-            if (accordionItem) accordionItem.classList.remove('section-disabled');
+    function collectState() {
+        const items = (list, mapper) => Array.from(list.querySelectorAll('.dynamic-item')).map(mapper);
+        const titles = {};
+        Object.entries(SECTION_TITLE_DEFAULTS).forEach(([section, [inputId]]) => {
+            titles[section] = $(inputId).value;
         });
+        const toggles = {};
+        sectionToggles.forEach(toggle => { toggles[toggle.getAttribute('data-section')] = toggle.checked; });
 
-        resetSectionOrderToDefault();
-
-        const currentLang = getCurrentLanguage();
-        if (currentLang === 'en') {
-            inputFullname.value = 'Alex Torto Ramos';
-            inputTitle.value = 'Project Manager // Strategic Consultant';
-            inputEmail.value = 'alextorto@email.com';
-            inputPhone.value = '+1 234 567 890';
-            inputLocation.value = 'New York, USA';
-            inputWebsite.value = 'alextorto.com';
-            inputLink.value = 'linkedin.com/in/alextorto';
-            inputLinkedin.value = 'linkedin.com/in/alextorto';
-            inputSummary.value = 'Proactive professional with over 5 years of experience leading multidisciplinary teams and optimizing operational processes. Passionate about continuous improvement, data analytics, and agile project management. Focused on maximizing efficiency and achieving organizational goals sustainably.';
-            
-            inputTitleProfile.value = 'Professional Profile';
-            inputTitleExperience.value = 'Work Experience';
-            inputTitleProjects.value = 'Projects';
-            inputTitleEducation.value = 'Education';
-            inputTitleSkills.value = 'Technology';
-            inputTitleSoftSkills.value = 'Skills';
-            inputSoftSkillsDesc.value = '• Agile project management (Scrum, Kanban)\n• Multidisciplinary team leadership\n• Effective communication and negotiation\n• Problem-solving and critical thinking';
-            inputTitleLanguages.value = 'Languages';
-
-            // Clear dynamic lists first
-            experienceList.innerHTML = '';
-            projectsList.innerHTML = '';
-            educationList.innerHTML = '';
-            if(skillsList) skillsList.innerHTML = '';
-            if(languagesList) languagesList.innerHTML = '';
-
-            // Load Sample Dynamic Data
-            addLanguageField('Spanish', 'Native');
-            addLanguageField('English', 'Advanced');
-            addLanguageField('French', 'Intermediate');
-            
-            setSkillsField('Agile Management, Leadership, Advanced Microsoft Excel, Negotiation, Python');
-            
-            addExperienceField({
-                role: 'Senior Project Manager',
-                company: 'Global Innovation Inc.',
-                dates: 'Mar 2021 - Present',
-                desc: '• Led a 15-person team to implement new operational processes.\n• Reduced operational costs by 20% in the first year.\n• Planned and executed annual budgets and KPI reporting.'
-            });
-            addExperienceField({
-                role: 'Junior Consultant',
-                company: 'Business Strategies LLC',
-                dates: 'Jun 2018 - Feb 2021',
-                desc: '• Conducted market analysis and prepared reports for key retail clients.\n• Assisted in restructuring financial departments.\n• Optimized internal company databases.'
-            });
-            addExperienceField({
-                role: 'Marketing Assistant',
-                company: 'Creative Marketing 360',
-                dates: 'Jan 2016 - May 2018',
-                desc: '• Coordinated social media advertising campaigns.\n• Analyzed performance metrics and follower growth.\n• Collaborated with the design team to create promotional material.'
-            });
-            addExperienceField({
-                role: 'Data Analyst',
-                company: 'DataTech Solutions',
-                dates: 'Aug 2014 - Dec 2015',
-                desc: '• Cleaned and structured client databases.\n• Developed interactive dashboards in Power BI.\n• Presented insights to executive management.'
-            });
-            addExperienceField({
-                role: 'Sales Executive',
-                company: 'National Trading Co.',
-                dates: 'Mar 2012 - Jul 2014',
-                desc: '• Managed a portfolio of over 50 corporate clients.\n• Closed negotiations and met quarterly sales targets.\n• Expanded sales territory by 15%.'
-            });
-            addExperienceField({
-                role: 'Administration Intern',
-                company: 'XYZ Construction Co.',
-                dates: 'Sep 2011 - Feb 2012',
-                desc: '• Assisted in human resources and recruitment processes.\n• Organized physical and digital files.\n• Supported basic accounting and billing tasks.'
-            });
-
-            // Add Projects
-            addProjectField({
-                title: 'Departmental Digital Transformation',
-                tech: 'Change Management, ERP, Training',
-                desc: 'Designed and executed the digital transformation strategy for the sales department, achieving 95% adoption of the new CRM system within 3 months.'
-            });
-            addProjectField({
-                title: 'Supply Chain Optimization',
-                tech: 'Data Analysis, Logistics, Negotiation',
-                desc: 'Logistics restructuring project resulting in a 15% reduction in delivery times and increased overall customer satisfaction.'
-            });
-
-            // Add Education
-            addEducationField({
-                degree: 'Master of Business Administration (MBA)',
-                school: 'University of Barcelona',
-                dates: '2016 - 2018'
-            });
-            addEducationField({
-                degree: 'A.A.S. in Computer Systems and Networks',
-                school: 'Metropolitan Technical College',
-                dates: '2022 - 2024'
-            });
-        } else {
-            // Load Text fields
-            inputFullname.value = 'Alex Torto Ramos';
-            inputTitle.value = 'Director de Proyectos // Consultor Estratégico';
-            inputEmail.value = 'alextorto@correo.com';
-            inputPhone.value = '+34 612 345 678';
-            inputLocation.value = 'Barcelona, España';
-            inputWebsite.value = 'alextorto.com';
-            inputLink.value = 'linkedin.com/in/alextorto';
-            inputLinkedin.value = 'linkedin.com/in/alextorto';
-            inputSummary.value = 'Profesional proactivo con más de 5 años de experiencia liderando equipos multidisciplinares y optimizando procesos operativos. Apasionado por la mejora continua, la analítica de datos y la gestión ágil de proyectos. Enfocado en maximizar la eficiencia y alcanzar los objetivos organizacionales de manera sostenible.';
-            
-            inputTitleProfile.value = 'Perfil Profesional';
-            inputTitleExperience.value = 'Experiencia Laboral';
-            inputTitleProjects.value = 'Proyectos';
-            inputTitleEducation.value = 'Formación';
-            inputTitleSkills.value = 'Tecnología';
-            inputTitleSoftSkills.value = 'Habilidades';
-            inputSoftSkillsDesc.value = '• Gestión ágil de proyectos (Scrum, Kanban)\n• Liderazgo de equipos multidisciplinares\n• Comunicación efectiva y negociación\n• Resolución de problemas y pensamiento crítico';
-            inputTitleLanguages.value = 'Idiomas';
-
-            // Clear dynamic lists first
-            experienceList.innerHTML = '';
-            projectsList.innerHTML = '';
-            educationList.innerHTML = '';
-            if(skillsList) skillsList.innerHTML = '';
-            if(languagesList) languagesList.innerHTML = '';
-
-            // Load Sample Dynamic Data
-            addLanguageField('Español', 'Nativo');
-            addLanguageField('Inglés', 'Avanzado');
-            addLanguageField('Francés', 'Intermedio');
-            
-            setSkillsField('Gestión Ágil, Liderazgo, Microsoft Excel Avanzado, Negociación, Python');
-            addExperienceField({
-                role: 'Gestor de Proyectos Senior',
-                company: 'Innovación Global S.A.',
-                dates: 'Mar 2021 - Actualidad',
-                desc: '• Liderazgo de un equipo de 15 personas para la implementación de nuevos procesos operativos.\n• Reducción de costes operativos en un 20% durante el primer año.\n• Planificación y ejecución de presupuestos anuales y reporte de KPIs.'
-            });
-            addExperienceField({
-                role: 'Consultor Junior',
-                company: 'Estrategias Empresariales LLC',
-                dates: 'Jun 2018 - Feb 2021',
-                desc: '• Análisis de mercado y elaboración de informes para clientes clave del sector retail.\n• Asistencia en la reestructuración de departamentos financieros.\n• Optimización de bases de datos internas de la compañía.'
-            });
-            addExperienceField({
-                role: 'Asistente de Marketing',
-                company: 'Marketing Creativo 360',
-                dates: 'Ene 2016 - May 2018',
-                desc: '• Coordinación de campañas publicitarias en redes sociales.\n• Análisis de métricas de rendimiento y crecimiento de seguidores.\n• Colaboración con el equipo de diseño para crear material promocional.'
-            });
-            addExperienceField({
-                role: 'Analista de Datos',
-                company: 'DataTech Solutions',
-                dates: 'Ago 2014 - Dic 2015',
-                desc: '• Limpieza y estructuración de bases de datos de clientes.\n• Desarrollo de tableros de control interactivos en Power BI.\n• Presentación de insights a la gerencia ejecutiva.'
-            });
-            addExperienceField({
-                role: 'Ejecutivo de Ventas',
-                company: 'Comercializadora Nacional',
-                dates: 'Mar 2012 - Jul 2014',
-                desc: '• Manejo de una cartera de más de 50 clientes corporativos.\n• Cierre de negociaciones y cumplimiento de metas de ventas trimestrales.\n• Expansión del territorio de ventas en un 15%.'
-            });
-            addExperienceField({
-                role: 'Pasante de Administración',
-                company: 'Empresa Constructora XYZ',
-                dates: 'Sep 2011 - Feb 2012',
-                desc: '• Asistencia en procesos de recursos humanos y reclutamiento.\n• Organización de archivos físicos y digitales.\n• Soporte en tareas de contabilidad básica y facturación.'
-            });
-
-            // Add Projects
-            addProjectField({
-                title: 'Transformación Digital Departamental',
-                tech: 'Gestión del Cambio, ERP, Formación',
-                desc: 'Diseño y ejecución de la estrategia de transformación digital para el departamento de ventas, logrando una adopción del 95% del nuevo sistema CRM en un periodo de 3 meses.'
-            });
-            addProjectField({
-                title: 'Optimización de Cadena de Suministro',
-                tech: 'Análisis de Datos, Logística, Negociación',
-                desc: 'Proyecto de reestructuración logística que resultó en la reducción de tiempos de entrega en un 15% y aumento de la satisfacción general del cliente.'
-            });
-
-            // Add Education
-            addEducationField({
-                degree: 'Máster en Dirección de Empresas (MBA)',
-                school: 'Universidad de Barcelona',
-                dates: '2016 - 2018'
-            });
-            addEducationField({
-                degree: 'C.F.G.M. en Sistemas Microinformáticos y Redes (SMR)',
-                school: 'Colegio Técnico Metropolitano',
-                dates: '2022 - 2024'
-            });
-        }
-
-        currentPhoto = null;
-        if(inputPhoto) inputPhoto.value = '';
-
-        updatePreview();
-    }));
-
-    // ----------------------------------------------------
-    // Clear Form Data (Custom Modal Triggered)
-    // ----------------------------------------------------
-    const confirmModal = document.getElementById('confirm-modal');
-    const modalBtnCancel = document.getElementById('modal-btn-cancel');
-    const modalBtnConfirm = document.getElementById('modal-btn-confirm');
-
-    // Show modal
-    btnClearData.addEventListener('click', () => {
-        confirmModal.classList.add('active');
-    });
-
-    // Hide modal on Cancel
-    modalBtnCancel.addEventListener('click', () => {
-        confirmModal.classList.remove('active');
-    });
-
-    // Hide modal on click outside modal-box
-    confirmModal.addEventListener('click', (e) => {
-        if (e.target === confirmModal) {
-            confirmModal.classList.remove('active');
-        }
-    });
-
-    // Clear and hide on Confirm
-    modalBtnConfirm.addEventListener('click', () => {
-        // Reset and enable all toggles
-        document.querySelectorAll('.section-toggle').forEach(toggle => {
-            toggle.checked = true;
-            const sectionId = toggle.getAttribute('data-section');
-            const targetSection = document.getElementById(sectionId);
-            const accordionItem = toggle.closest('.accordion-item');
-            if (targetSection) targetSection.classList.remove('hidden-section');
-            if (accordionItem) accordionItem.classList.remove('section-disabled');
-        });
-
-        resetSectionOrderToDefault();
-
-        // Clear inputs
-        const textInputs = [
-            inputFullname, inputTitle, inputEmail, inputPhone, inputLink,
-            inputLinkedin, inputWebsite, inputLocation, inputSummary
-        ];
-        textInputs.forEach(input => input.value = '');
-
-        const t = getTranslations();
-
-        inputTitleProfile.value = t.def_profile;
-        inputTitleExperience.value = t.def_experience;
-        inputTitleProjects.value = t.def_projects;
-        inputTitleEducation.value = t.def_education;
-        inputTitleSkills.value = t.def_skills;
-        inputTitleSoftSkills.value = t.def_softskills;
-        inputSoftSkillsDesc.value = '';
-        inputTitleLanguages.value = t.def_languages;
-
-        // Clear Dynamic Lists
-        experienceList.innerHTML = '';
-        projectsList.innerHTML = '';
-        educationList.innerHTML = '';
-        if(skillsList) skillsList.innerHTML = '';
-        if(languagesList) languagesList.innerHTML = '';
-
-        currentPhoto = null;
-        if(inputPhoto) inputPhoto.value = '';
-
-        // Update Preview to blank fallback states
-        updatePreview();
-        
-        // Hide modal
-        confirmModal.classList.remove('active');
-    });
-
-    // ----------------------------------------------------
-    // Import / Export JSON
-    // ----------------------------------------------------
-    if(btnExportJson) {
-        btnExportJson.addEventListener('click', () => {
-            saveToLocalStorage(); // Ensure latest changes are saved
-            const savedStateString = readStorage(STORAGE_KEYS.state);
-            if (!savedStateString) return;
-            const blob = new Blob([savedStateString], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            let baseName = inputFullname.value.trim().replace(/\s+/g, '_');
-            if (!baseName) baseName = 'Mi_Curriculum';
-            a.download = `${baseName}_ProCVX.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-    }
-
-    if(btnImportJson && inputJsonFile) {
-        btnImportJson.addEventListener('click', () => {
-            inputJsonFile.click();
-        });
-
-        inputJsonFile.addEventListener('change', (event) => {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const importedState = parseJson(e.target.result);
-                    if (!importedState || typeof importedState !== 'object') {
-                        throw new Error('Invalid CV data');
-                    }
-                    if (!importedState || typeof importedState !== 'object' || Array.isArray(importedState)) {
-                        throw new Error('Invalid CV data');
-                    }
-                    writeStorage(STORAGE_KEYS.state, JSON.stringify(importedState));
-                    loadFromLocalStorage();
-                    alert(tr('alert_import_ok'));
-                } catch (err) {
-                    alert(tr('alert_import_error'));
-                }
-                inputJsonFile.value = '';
-            };
-            reader.readAsText(file);
-        });
-    }
-
-    // ----------------------------------------------------
-    // Export PDF (Browser Print Trigger)
-    // ----------------------------------------------------
-    btnExportPdf.addEventListener('click', () => {
-        let baseName = inputFullname.value.trim().replace(/\s+/g, '_');
-        if (!baseName) baseName = 'Curriculum';
-        
-        // Save the original document title
-        const originalTitle = document.title;
-        // Temporarily change title so the exported PDF gets this default name
-        document.title = `${baseName}_ProCVX`;
-        
-        // Trigger native print dialog
-        // Restore the title once the print dialog closes (print() can be async on some browsers)
-        window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
-        window.print();
-    });
-
-    // ----------------------------------------------------
-    // LocalStorage State Persistence
-    // ----------------------------------------------------
-    function saveToLocalStorage() {
-        const cvData = {
+        return {
             fullname: inputFullname.value,
             title: inputTitle.value,
             email: inputEmail.value,
@@ -1372,96 +1043,309 @@ document.addEventListener('DOMContentLoaded', () => {
             linkedin: inputLinkedin.value,
             summary: inputSummary.value,
             skills: [{ name: skillsList.querySelector('.skill-name')?.value || '' }],
-            titles: {
-                profile: inputTitleProfile.value,
-                experience: inputTitleExperience.value,
-                projects: inputTitleProjects.value,
-                education: inputTitleEducation.value,
-                skills: inputTitleSkills.value,
-                softskills: inputTitleSoftSkills.value,
-                languages: inputTitleLanguages.value
-            },
+            titles,
             softskillsDesc: inputSoftSkillsDesc.value,
             photo: currentPhoto,
-            experience: [],
-            projects: [],
-            education: [],
-            languages: [],
-            toggles: {}
+            experience: items(experienceList, item => ({
+                role: val(item, '.exp-role'), company: val(item, '.exp-company'),
+                dates: val(item, '.exp-dates'), desc: val(item, '.exp-desc')
+            })),
+            projects: items(projectsList, item => ({
+                title: val(item, '.proj-title'), tech: val(item, '.proj-tech'), desc: val(item, '.proj-desc')
+            })),
+            education: items(educationList, item => ({
+                degree: val(item, '.edu-degree'), school: val(item, '.edu-school'), dates: val(item, '.edu-dates')
+            })),
+            volunteer: items(volunteerList, item => ({
+                role: val(item, '.vol-role'), organization: val(item, '.vol-org'),
+                dates: val(item, '.vol-dates'), desc: val(item, '.vol-desc')
+            })),
+            certifications: items(certificationsList, item => ({
+                name: val(item, '.cert-name'), issuer: val(item, '.cert-issuer'), date: val(item, '.cert-date')
+            })),
+            languages: items(languagesList, item => ({
+                name: val(item, '.lang-name'), level: val(item, '.lang-level')
+            })),
+            toggles
         };
+    }
 
-        // Extract Languages
-        if (languagesList) {
-            document.querySelectorAll('#languages-list .dynamic-item').forEach(item => {
-                cvData.languages.push({
-                    name: item.querySelector('.lang-name').value,
-                    level: item.querySelector('.lang-level').value
-                });
-            });
-        }
+    // Fills the whole editor from a state object (saved, imported, sample or empty)
+    function applyState(state) {
+        state = state && typeof state === 'object' && !Array.isArray(state) ? state : {};
+        const t = getTranslations();
+        const str = value => (typeof value === 'string' || typeof value === 'number') ? String(value) : '';
+        const validItems = list => Array.isArray(list) ? list.filter(item => item && typeof item === 'object') : [];
 
-        // Collect Toggles State
-        document.querySelectorAll('.section-toggle').forEach(toggle => {
-            cvData.toggles[toggle.getAttribute('data-section')] = toggle.checked;
+        inputFullname.value = str(state.fullname);
+        inputTitle.value = str(state.title);
+        inputEmail.value = str(state.email);
+        inputPhone.value = str(state.phone);
+        inputLocation.value = str(state.location);
+        inputWebsite.value = str(state.website);
+        inputLink.value = str(state.link || state.github);
+        inputLinkedin.value = str(state.linkedin);
+        inputSummary.value = str(state.summary);
+        inputSoftSkillsDesc.value = str(state.softskillsDesc);
+
+        const titles = state.titles && typeof state.titles === 'object' ? state.titles : {};
+        Object.entries(SECTION_TITLE_DEFAULTS).forEach(([section, [inputId, key]]) => {
+            $(inputId).value = str(titles[section]) || t[key];
         });
 
-        // Collect Experience Items
-        experienceList.querySelectorAll('.dynamic-item').forEach(item => {
-            cvData.experience.push({
-                role: item.querySelector('.exp-role').value,
-                company: item.querySelector('.exp-company').value,
-                dates: item.querySelector('.exp-dates').value,
-                desc: item.querySelector('.exp-desc').value
-            });
+        // Only accept embedded images as photo
+        currentPhoto = typeof state.photo === 'string' && /^data:image\//.test(state.photo) ? state.photo : null;
+
+        const toggles = state.toggles && typeof state.toggles === 'object' ? state.toggles : {};
+        sectionToggles.forEach(toggle => {
+            const saved = toggles[toggle.getAttribute('data-section')];
+            setSectionEnabled(toggle, saved === undefined ? true : Boolean(saved));
         });
 
-        // Collect Project Items
-        projectsList.querySelectorAll('.dynamic-item').forEach(item => {
-            cvData.projects.push({
-                title: item.querySelector('.proj-title').value,
-                tech: item.querySelector('.proj-tech').value,
-                desc: item.querySelector('.proj-desc').value
-            });
+        clearDynamicLists();
+        runBulk(() => {
+            setSkillsField(validItems(state.skills).map(sk => str(sk.name)).filter(Boolean).join(', '));
+            validItems(state.languages).forEach(lg => addLanguageField(str(lg.name), str(lg.level) || 'Básico'));
+            validItems(state.experience).forEach(exp => addExperienceField(exp));
+            validItems(state.projects).forEach(proj => addProjectField(proj));
+            validItems(state.education).forEach(edu => addEducationField(edu));
+            validItems(state.volunteer).forEach(vol => addVolunteerField(vol));
+            validItems(state.certifications).forEach(cert => addCertificationField(cert));
         });
+    }
 
-        // Collect Education Items
-        educationList.querySelectorAll('.dynamic-item').forEach(item => {
-            cvData.education.push({
-                degree: item.querySelector('.edu-degree').value,
-                school: item.querySelector('.edu-school').value,
-                dates: item.querySelector('.edu-dates').value
-            });
-        });
-
-        // Note: we can't save theme and template inside cvData right now because import/export 
-        // doesn't usually override layout, but let's save them to localStorage independently.
-        try {
-            writeStorage(STORAGE_KEYS.state, JSON.stringify(cvData));
-        } catch (e) {
-            // Quota exceeded (usually a large photo). Keep the app working.
-            console.warn('ProCVX: could not save to localStorage', e);
-        }
-        
-        // Save Section Order
-        const orderedIds = Array.from(document.querySelectorAll('.section-toggle'))
-            .map(toggle => toggle.getAttribute('data-section'))
-            .filter(id => id);
-        writeStorage(STORAGE_KEYS.sectionOrder, JSON.stringify(orderedIds));
-
-        const activeThemeItem = document.querySelector('#theme-dropdown-menu .dropdown-item.active');
-        if (activeThemeItem) {
-            writeStorage(STORAGE_KEYS.theme, activeThemeItem.getAttribute('data-theme'));
-        }
-        
-        const activeTemplateItem = document.querySelector('#template-dropdown-menu .dropdown-item.active');
-        if (activeTemplateItem) {
-            writeStorage(STORAGE_KEYS.template, activeTemplateItem.getAttribute('data-template'));
+    let saveFailedNotified = false;
+    function saveNow() {
+        scheduleSave.cancel();
+        const ok = writeStorage(STORAGE_KEYS.state, JSON.stringify(collectState()));
+        writeStorage(STORAGE_KEYS.sectionOrder, JSON.stringify(getSectionOrder()));
+        const theme = themeContainer.querySelector('.dropdown-item.active')?.getAttribute('data-theme');
+        const template = templateContainer.querySelector('.dropdown-item.active')?.getAttribute('data-template');
+        if (theme) writeStorage(STORAGE_KEYS.theme, theme);
+        if (template) writeStorage(STORAGE_KEYS.template, template);
+        if (!ok && !saveFailedNotified) {
+            // Usually a quota error caused by a large photo; warn once per session
+            saveFailedNotified = true;
+            toast(tr('toast_save_failed'), 'error');
         }
     }
 
-    function loadFromLocalStorage() {
-        // Snapshot of the stored data BEFORE anything calls updatePreview(),
-        // which saves the (still empty) form and would overwrite it.
+    // Typing triggers many updates: save at most once per pause in typing
+    const scheduleSave = debounce(saveNow, SAVE_DELAY_MS);
+    window.addEventListener('pagehide', () => scheduleSave.flush());
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') scheduleSave.flush();
+    });
+
+    function getSampleData(lang = getCurrentLanguage()) {
+        return SAMPLE_DATA[lang] || SAMPLE_DATA.es;
+    }
+
+    function isShowingSample() {
+        return Object.values(SAMPLE_DATA).some(sample => sample.fullname === inputFullname.value);
+    }
+
+    function loadSample() {
+        resetSectionOrderToDefault();
+        applyState(getSampleData());
+        saveNow();
+    }
+
+    btnSampleData.addEventListener('click', () => {
+        loadSample();
+        toast(tr('toast_sample_loaded'), 'success');
+    });
+
+    // ----------------------------------------------------
+    // Modals (confirm + legal)
+    // ----------------------------------------------------
+    let lastFocusedBeforeModal = null;
+
+    function openModal(modalId) {
+        const modal = $(modalId);
+        if (!modal) return;
+        lastFocusedBeforeModal = document.activeElement;
+        modal.inert = false;
+        modal.classList.add('active');
+        createIcons(modal);
+        modal.querySelector('button, [href], input, [tabindex]:not([tabindex="-1"])')?.focus();
+    }
+
+    function closeModal(modalId) {
+        const modal = $(modalId);
+        if (!modal || !modal.classList.contains('active')) return;
+        modal.classList.remove('active');
+        modal.inert = true;
+        lastFocusedBeforeModal?.focus?.();
+        lastFocusedBeforeModal = null;
+    }
+
+    document.querySelectorAll('[data-open-modal]').forEach(btn => {
+        btn.addEventListener('click', () => openModal(btn.getAttribute('data-open-modal')));
+    });
+    document.querySelectorAll('[data-close-modal]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close-modal')));
+    });
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeModal(overlay.id);
+        });
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        const activeModal = document.querySelector('.modal-overlay.active');
+        if (activeModal) {
+            closeModal(activeModal.id);
+            return;
+        }
+        const openDropdownEl = dropdownContainers.find(c => c.classList.contains('open'));
+        if (openDropdownEl) closeDropdown(openDropdownEl, { focusHeader: true });
+    });
+
+    btnClearData.addEventListener('click', () => openModal('confirm-modal'));
+    $('modal-btn-cancel').addEventListener('click', () => closeModal('confirm-modal'));
+    $('modal-btn-confirm').addEventListener('click', () => {
+        resetSectionOrderToDefault();
+        applyState({});
+        saveNow();
+        closeModal('confirm-modal');
+        toast(tr('toast_cleared'), 'info');
+    });
+
+    // ----------------------------------------------------
+    // Import / Export JSON
+    // ----------------------------------------------------
+    function getFileBaseName(fallback) {
+        return inputFullname.value.trim().replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, '_') || fallback;
+    }
+
+    btnExportJson?.addEventListener('click', () => {
+        saveNow();
+        const blob = new Blob([JSON.stringify(collectState(), null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${getFileBaseName('Mi_Curriculum')}_ProCVX.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 0);
+        toast(tr('toast_exported'), 'success');
+    });
+
+    btnImportJson?.addEventListener('click', () => inputJsonFile.click());
+
+    inputJsonFile?.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const importedState = parseJson(e.target.result);
+            if (!importedState || typeof importedState !== 'object' || Array.isArray(importedState)) {
+                toast(tr('alert_import_error'), 'error');
+            } else {
+                applyState(importedState);
+                saveNow();
+                toast(tr('alert_import_ok'), 'success');
+            }
+            inputJsonFile.value = '';
+        };
+        reader.onerror = () => {
+            toast(tr('alert_import_error'), 'error');
+            inputJsonFile.value = '';
+        };
+        reader.readAsText(file);
+    });
+
+    // ----------------------------------------------------
+    // Export PDF (browser print)
+    // ----------------------------------------------------
+    btnExportPdf.addEventListener('click', () => {
+        saveNow();
+        const originalTitle = document.title;
+        // The browser uses the page title as the default PDF file name
+        document.title = `${getFileBaseName('Curriculum')}_ProCVX`;
+        window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
+        window.print();
+    });
+
+    // ----------------------------------------------------
+    // Mobile: editor / preview switch and preview scaling
+    // ----------------------------------------------------
+    const previewPanel = document.querySelector('.preview-panel');
+    const previewSheet = $('cv-preview-sheet');
+
+    // Scales the A4 sheet down (never up) so it fits the preview panel without horizontal scroll
+    function fitPreview() {
+        if (!previewPanel || !previewSheet) return;
+        previewSheet.style.zoom = '';
+        const style = getComputedStyle(previewPanel);
+        const available = previewPanel.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+        const sheetWidth = previewSheet.offsetWidth;
+        if (available <= 0 || sheetWidth <= 0) return;
+        const scale = Math.min(1, available / sheetWidth);
+        if (scale < 1) previewSheet.style.zoom = scale.toFixed(4);
+    }
+
+    if (previewPanel && 'ResizeObserver' in window) {
+        new ResizeObserver(() => fitPreview()).observe(previewPanel);
+    }
+    window.addEventListener('afterprint', fitPreview);
+    window.addEventListener('beforeprint', () => { if (previewSheet) previewSheet.style.zoom = ''; });
+
+    const viewButtons = Array.from(document.querySelectorAll('.mobile-view-btn'));
+    function setMobileView(view) {
+        document.body.setAttribute('data-view', view);
+        viewButtons.forEach(btn => {
+            const active = btn.getAttribute('data-view') === view;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', String(active));
+        });
+        fitPreview();
+        window.scrollTo({ top: 0 });
+    }
+    viewButtons.forEach(btn => btn.addEventListener('click', () => setMobileView(btn.getAttribute('data-view'))));
+
+    // ----------------------------------------------------
+    // Auto-bullet textareas
+    // ----------------------------------------------------
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Enter' || !e.target?.classList?.contains('bullet-textarea')) return;
+        e.preventDefault();
+        const textarea = e.target;
+        const { selectionStart: start, selectionEnd: end, value } = textarea;
+        const bullet = '\n• ';
+        textarea.value = value.substring(0, start) + bullet + value.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + bullet.length;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    // Capture phase: normalise the bullet BEFORE the field's own listener renders the preview
+    document.addEventListener('input', (e) => {
+        const textarea = e.target;
+        if (!textarea?.classList?.contains('bullet-textarea')) return;
+        const value = textarea.value;
+        if ((value === '•' || value === '• ') && e.inputType === 'deleteContentBackward') {
+            textarea.value = '';
+        } else if (value.length > 0 && !value.startsWith('• ')) {
+            textarea.value = '• ' + (value.startsWith('•') ? value.substring(1).trimStart() : value);
+        }
+    }, true);
+
+    document.addEventListener('focusin', (e) => {
+        const textarea = e.target;
+        if (!textarea?.classList?.contains('bullet-textarea') || textarea.value.trim() !== '') return;
+        textarea.value = '• ';
+        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+
+    // ----------------------------------------------------
+    // Initialization
+    // ----------------------------------------------------
+    function init() {
+        // Snapshot stored data first: rendering schedules saves of the (still empty) form
         const stored = {
             state: readStorage(STORAGE_KEYS.state),
             theme: readStorage(STORAGE_KEYS.theme),
@@ -1469,294 +1353,40 @@ document.addEventListener('DOMContentLoaded', () => {
             order: readStorage(STORAGE_KEYS.sectionOrder)
         };
 
-        // Load Language
-        const savedLang = getCurrentLanguage();
-        const langDropdownContainer = document.getElementById('lang-dropdown-container');
-        if (langDropdownContainer) {
-            const langItems = document.querySelectorAll('#lang-dropdown-menu .dropdown-item');
-            const langSelectedText = document.getElementById('lang-selected-text');
-            langItems.forEach(i => {
-                if (i.getAttribute('data-lang') === savedLang) {
-                    i.classList.add('active');
-                    langSelectedText.textContent = i.textContent;
-                } else {
-                    i.classList.remove('active');
-                }
-            });
-            updateLanguage(savedLang);
+        const lang = getCurrentLanguage();
+        markLanguage(lang);
+        applyTheme(stored.theme || 'sapphire');
+        applyTemplate(stored.template || 'modern');
+        setMobileView('editor');
+
+        const order = parseJson(stored.order, null);
+        if (Array.isArray(order)) applySectionOrder(order);
+        else updatePreviewSectionOrder();
+
+        const state = parseJson(stored.state, null);
+        if (state && typeof state === 'object' && !Array.isArray(state)) {
+            applyState(state);
+        } else {
+            // First visit (or unreadable data): show the sample so the preview isn't empty
+            loadSample();
         }
-
-        // Load Theme
-        const savedTheme = stored.theme || 'sapphire';
-        const savedTemplate = stored.template || 'modern';
-        
-        document.body.className = '';
-        document.body.classList.add(`theme-${savedTheme}`);
-        document.body.classList.add(`template-${savedTemplate}`);
-        
-        // Mark correct theme selector active
-        const themeDropdownMenu = document.getElementById('theme-dropdown-menu');
-        const themeSelectedIcon = document.getElementById('theme-selected-icon');
-        if (themeDropdownMenu && themeSelectedIcon) {
-            const themeItems = themeDropdownMenu.querySelectorAll('.dropdown-item');
-            themeItems.forEach(i => {
-                if (i.getAttribute('data-theme') === savedTheme) {
-                    i.classList.add('active');
-                    themeSelectedIcon.className = `theme-btn btn-${savedTheme} active`;
-                } else {
-                    i.classList.remove('active');
-                }
-            });
-        }
-
-        // Mark correct template selector active
-        const templateDropdownMenu = document.getElementById('template-dropdown-menu');
-        const templateSelectedText = document.getElementById('template-selected-text');
-        if (templateDropdownMenu && templateSelectedText) {
-            const templateItems = templateDropdownMenu.querySelectorAll('.dropdown-item');
-            templateItems.forEach(i => {
-                if (i.getAttribute('data-template') === savedTemplate) {
-                    i.classList.add('active');
-                    const iconElement = i.querySelector('i');
-                    if (iconElement) {
-                        templateSelectedText.innerHTML = iconElement.outerHTML;
-                        if (window.lucide) {
-                            lucide.createIcons({
-                                nameAttr: 'data-lucide',
-                                root: templateSelectedText
-                            });
-                        }
-                    }
-                } else {
-                    i.classList.remove('active');
-                }
-            });
-        }
-
-        // Restore Section Order
-        const savedOrderStr = stored.order;
-        if (savedOrderStr) {
-            try {
-                const savedOrder = parseJson(savedOrderStr, []);
-                const container = document.querySelector('.sidebar-content');
-                // We find the parent of the accordions. The accordions are inside .sidebar-content
-                // Let's reorder them
-                savedOrder.forEach(sectionId => {
-                    const toggle = document.querySelector(`.section-toggle[data-section="${sectionId}"]`);
-                    if (toggle) {
-                        const item = toggle.closest('.accordion-item');
-                        if (item && item.parentNode) {
-                            item.parentNode.appendChild(item); // Move to the end
-                        }
-                    }
-                });
-                updatePreviewSectionOrder();
-            } catch (e) {
-                // Ignore corrupted local storage section order
-            }
-        }
-
-        // Load State
-        const savedStateString = stored.state;
-        if (!savedStateString) {
-            // Load Sample Data on first visit to impress the user immediately!
-            btnSampleData.click();
-            return;
-        }
-
-        try {
-            const state = parseJson(savedStateString);
-            if (!state || typeof state !== 'object') throw new Error('Invalid saved state');
-            if (!state) {
-                btnSampleData.click();
-                return;
-            }
-            
-            // Check if state is essentially empty
-            const isEmpty = !state.fullname && 
-                            (!state.experience || state.experience.length === 0) &&
-                            (!state.education || state.education.length === 0);
-            if (isEmpty) {
-                btnSampleData.click();
-                return;
-            }
-            
-            // Populate text inputs
-            inputFullname.value = state.fullname || '';
-            inputTitle.value = state.title || '';
-            inputEmail.value = state.email || '';
-            inputPhone.value = state.phone || '';
-            inputLocation.value = state.location || '';
-            inputWebsite.value = state.website || '';
-            inputLink.value = state.link || state.github || '';
-            inputLinkedin.value = state.linkedin || '';
-            inputSummary.value = state.summary || '';
-
-            const t = getTranslations();
-
-            if (state.titles) {
-                inputTitleProfile.value = state.titles.profile || t.def_profile;
-                inputTitleExperience.value = state.titles.experience || t.def_experience;
-                inputTitleProjects.value = state.titles.projects || t.def_projects;
-                inputTitleEducation.value = state.titles.education || t.def_education;
-                inputTitleSkills.value = state.titles.skills || t.def_skills;
-                inputTitleSoftSkills.value = state.titles.softskills || t.def_softskills;
-                inputTitleLanguages.value = state.titles.languages || t.def_languages;
-            } else {
-                inputTitleProfile.value = t.def_profile;
-                inputTitleExperience.value = t.def_experience;
-                inputTitleProjects.value = t.def_projects;
-                inputTitleEducation.value = t.def_education;
-                inputTitleSkills.value = t.def_skills;
-                inputTitleSoftSkills.value = t.def_softskills;
-                inputSoftSkillsDesc.value = '';
-                inputTitleLanguages.value = t.def_languages;
-            }
-            inputSoftSkillsDesc.value = state.softskillsDesc || '';
-            currentPhoto = state.photo || null;
-
-            // Clear dynamic lists before loading
-            experienceList.innerHTML = '';
-            projectsList.innerHTML = '';
-            educationList.innerHTML = '';
-            if(skillsList) skillsList.innerHTML = '';
-            if(languagesList) languagesList.innerHTML = '';
-
-            // Only keep real objects (ignores null/garbage entries in imported files)
-            const validItems = list => Array.isArray(list) ? list.filter(item => item && typeof item === 'object') : [];
-
-            runBulk(() => {
-                const savedSkills = validItems(state.skills);
-                const skillsValue = savedSkills.map(sk => sk.name ? String(sk.name) : '').filter(Boolean).join(', ');
-                setSkillsField(skillsValue);
-                validItems(state.languages).forEach(lg => addLanguageField(lg.name ? String(lg.name) : '', lg.level));
-                validItems(state.experience).forEach(exp => addExperienceField(exp));
-                validItems(state.projects).forEach(proj => addProjectField(proj));
-                validItems(state.education).forEach(edu => addEducationField(edu));
-            });
-
-            // Restore toggles state
-            if (state.toggles) {
-                document.querySelectorAll('.section-toggle').forEach(toggle => {
-                    const sectionId = toggle.getAttribute('data-section');
-                    if (state.toggles[sectionId] !== undefined) {
-                        toggle.checked = state.toggles[sectionId];
-                        const targetSection = document.getElementById(sectionId);
-                        const accordionItem = toggle.closest('.accordion-item');
-                        if (targetSection && accordionItem) {
-                            if (toggle.checked) {
-                                targetSection.classList.remove('hidden-section');
-                                accordionItem.classList.remove('section-disabled');
-                            } else {
-                                targetSection.classList.add('hidden-section');
-                                accordionItem.classList.add('section-disabled');
-                            }
-                        }
-                    }
-                });
-            }
-
-            updatePreview();
-        } catch (e) {
-            // Default behavior handles empty fields fine.
-            btnSampleData.click();
-        }
+        createIcons();
+        fitPreview();
     }
 
-    // ----------------------------------------------------
-    // Section Visibility Toggles
-    // ----------------------------------------------------
-    const sectionToggles = document.querySelectorAll('.section-toggle');
-    
-    sectionToggles.forEach(toggle => {
-        // Prevent accordion from toggling when clicking the checkbox
-        toggle.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        // Toggle section in preview
-        toggle.addEventListener('change', () => {
-            const sectionId = toggle.getAttribute('data-section');
-            const targetSection = document.getElementById(sectionId);
-            const accordionItem = toggle.closest('.accordion-item');
-
-            if (targetSection && accordionItem) {
-                if (toggle.checked) {
-                    targetSection.classList.remove('hidden-section');
-                    accordionItem.classList.remove('section-disabled');
-                } else {
-                    targetSection.classList.add('hidden-section');
-                    accordionItem.classList.add('section-disabled');
-                }
-            }
-            saveToLocalStorage();
-        });
-    });
+    init();
 
     // ----------------------------------------------------
-    // Auto-bullet functionality
+    // Offline support (service worker). Only over http(s): not available on file://
     // ----------------------------------------------------
-    document.addEventListener('keydown', function(e) {
-        if (e.target && e.target.classList.contains('bullet-textarea')) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const start = e.target.selectionStart;
-                const end = e.target.selectionEnd;
-                const val = e.target.value;
-                const bullet = '\n• ';
-                e.target.value = val.substring(0, start) + bullet + val.substring(end);
-                e.target.selectionStart = e.target.selectionEnd = start + bullet.length;
-                e.target.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        }
-    });
-
-    document.addEventListener('input', function(e) {
-        if (e.target && e.target.classList.contains('bullet-textarea')) {
-            let val = e.target.value;
-            if (val.length > 0 && !val.startsWith('• ')) {
-                if (val.startsWith('•')) {
-                    e.target.value = '• ' + val.substring(1).trimStart();
-                } else {
-                    e.target.value = '• ' + val;
-                }
-            }
-            // Also ensure that if the user deletes everything except the bullet, and then deletes the bullet, it allows it to be empty.
-            if (val === '•' || val === '• ') {
-                // If they are trying to delete the bullet, let it become empty
-                // Wait, if it's strictly '• ' and they backspace, it becomes '•' which then triggers nothing or we can clear it.
-                if (e.inputType === 'deleteContentBackward') {
-                    e.target.value = '';
-                }
-            }
-        }
-    });
-
-    document.addEventListener('focusin', function(e) {
-        if (e.target && e.target.classList.contains('bullet-textarea')) {
-            if (e.target.value.trim() === '') {
-                e.target.value = '• ';
-                e.target.selectionStart = e.target.selectionEnd = e.target.value.length;
-                e.target.dispatchEvent(new Event('input', { bubbles: true }));
-            }
-        }
-    });
-
-    // ----------------------------------------------------
-    // Initialization
-    // ----------------------------------------------------
-    loadFromLocalStorage();
-    safeCreateIcons();
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+        const firstInstall = !navigator.serviceWorker.controller;
+        navigator.serviceWorker.register('sw.js').then(registration => {
+            const worker = registration.installing;
+            if (!firstInstall || !worker) return;
+            worker.addEventListener('statechange', () => {
+                if (worker.state === 'activated') toast(tr('toast_offline_ready'), 'success');
+            });
+        }).catch(() => { /* Offline mode is optional */ });
+    }
 });
-
-// ----------------------------------------------------
-// Legal Modals
-// ----------------------------------------------------
-window.openLegalModal = function(modalId) {
-    document.getElementById(modalId).classList.add('active');
-    // Refresh lucide icons for modal close buttons if needed
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-};
-window.closeLegalModal = function(modalId) {
-    document.getElementById(modalId).classList.remove('active');
-};
