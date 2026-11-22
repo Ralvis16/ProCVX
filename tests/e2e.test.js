@@ -190,7 +190,7 @@ test('section toggles and reordering update the preview and persist', async t =>
     await experienceItem.locator('.btn-section-down').click();
     const [projAfter, expAfter] = await order();
     assert.ok(projAfter < expAfter);
-    assert.equal(await experienceItem.getAttribute('open'), null, 'arrow click does not open the accordion');
+    assert.equal(await experienceItem.locator('details').getAttribute('open'), null, 'arrow click does not open the accordion');
 
     await page.reload();
     assert.equal(await page.locator('#cv-section-projects').isHidden(), true);
@@ -485,4 +485,47 @@ test('donate link: hidden without a URL; with one, shown in the footer and sugge
     await page.click('#btn-export-pdf');
     await page.waitForTimeout(900);
     assert.equal(await page.locator('.toast .toast-action').count(), 1);
+});
+
+test('accessibility: no interactive content inside <summary> (Chrome Issues panel stays clean)', async t => {
+    const { page, context } = await openApp(t);
+    const cdp = await context.newCDPSession(page);
+    const issues = [];
+    cdp.on('Audits.issueAdded', e => issues.push(e.issue.code));
+    await cdp.send('Audits.enable');
+    await page.reload();
+    await page.waitForFunction(() => document.getElementById('preview-fullname').textContent.includes('Alex'));
+    await page.waitForTimeout(500);
+    assert.deepEqual(issues, [], 'no Chrome issues');
+    assert.equal(await page.locator('summary :is(input, button, select, textarea, a, [tabindex])').count(), 0);
+
+    // Header controls still work and don't toggle the accordion
+    const item = page.locator('.accordion-item', { has: page.locator('[data-section="cv-section-projects"]') });
+    await item.locator('.section-toggle').uncheck();
+    assert.equal(await page.locator('#cv-section-projects').isHidden(), true);
+    assert.equal(await item.locator('details').getAttribute('open'), null);
+    await item.locator('summary').click();
+    assert.equal(await item.locator('details').getAttribute('open'), '');
+});
+
+test('sections can be reordered by drag and drop (handle or header), not above fixed sections', async t => {
+    const { page } = await openApp(t);
+    const order = () => page.evaluate(() => [...document.querySelectorAll('.section-toggle')]
+        .map(el => el.dataset.section.replace('cv-section-', '')));
+    const item = s => page.locator('.accordion-item', { has: page.locator(`[data-section="cv-section-${s}"]`) });
+
+    await item('volunteer').locator('.drag-handle').dragTo(item('projects').locator('summary'), { targetPosition: { x: 40, y: 8 } });
+    let current = await order();
+    assert.ok(current.indexOf('volunteer') < current.indexOf('projects'), current.join());
+    assert.ok(await page.evaluate(() =>
+        +document.getElementById('cv-section-volunteer').style.order < +document.getElementById('cv-section-projects').style.order));
+
+    await item('languages').locator('summary').dragTo(item('education').locator('summary'), { targetPosition: { x: 40, y: 8 } });
+    current = await order();
+    assert.ok(current.indexOf('languages') < current.indexOf('education'), current.join());
+
+    // Fixed sections (personal info, profile) stay on top
+    await item('skills').locator('.drag-handle').dragTo(page.locator('.accordion-item[data-fixed]').first().locator('summary'), { targetPosition: { x: 40, y: 8 } });
+    assert.equal((await order())[0], 'summary');
+    assert.equal(await page.locator('.editor-accordion > .accordion-item').first().getAttribute('data-fixed'), 'true');
 });
