@@ -1,0 +1,291 @@
+// End-to-end tests in a real browser (Playwright + Chromium).
+// Run: node --test tests/   (requires `playwright` and a Chromium build available to it)
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const { execFileSync } = require('child_process');
+const { pathToFileURL } = require('url');
+const { chromium } = require('playwright');
+
+const APP_URL = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
+const STATE_KEY = 'procvx-state';
+
+let browser;
+test.before(async () => { browser = await chromium.launch(); });
+test.after(async () => { await browser?.close(); });
+
+// Fresh context (= empty localStorage) per test; fails the test on JS errors or native dialogs.
+async function openApp(t, { viewport = { width: 1440, height: 900 } } = {}) {
+    const context = await browser.newContext({ viewport, acceptDownloads: true });
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    page.on('dialog', d => { errors.push('native dialog: ' + d.message()); d.dismiss(); });
+    await page.goto(APP_URL);
+    await page.waitForFunction(() => document.getElementById('preview-fullname').textContent.includes('Alex'));
+    t.after(async () => {
+        await context.close();
+        assert.deepEqual(errors, [], 'no JS errors / native dialogs');
+    });
+    return { page, context };
+}
+
+const storedState = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)), STATE_KEY);
+const previewText = (page, id) => page.locator('#' + id).innerText();
+// Closed modals stay in the layout (faded out) but are inert, so they can't be focused or clicked
+const modalIsClosed = (page, id) => page.waitForFunction(modalId => {
+    const modal = document.getElementById(modalId);
+    return !modal.classList.contains('active') && modal.inert;
+}, id);
+
+test('first visit shows the sample CV and the completeness meter', async t => {
+    const { page } = await openApp(t);
+    assert.match(await previewText(page, 'preview-fullname'), /Alex Torto\s+Ramos/);
+    assert.equal(await page.locator('#cv-preview-sheet .cv-item-block').count(), 6);
+    // Duplicate LinkedIn/link contact no longer shown
+    assert.equal(await page.locator('#cv-contact-link-container').isHidden(), true);
+    assert.match(await page.locator('#completeness-text').innerText(), /100 %/);
+    assert.equal(await page.locator('#completeness-bar').getAttribute('aria-valuenow'), '100');
+    assert.equal(await page.title(), 'ProCVX // Creador de Currículum Profesional');
+});
+
+test('typing updates the preview instantly and saves after a pause (debounced)', async t => {
+    const { page } = await openApp(t);
+    await page.locator('summary', { has: page.locator('[data-i18n="sec_personal"]') }).click();
+    await page.fill('#input-fullname', 'Ana López');
+    assert.equal(await previewText(page, 'preview-fullname'), 'Ana López');
+    // Not written synchronously on every keystroke...
+    assert.equal((await storedState(page)).fullname, 'Alex Torto Ramos');
+    // ...but shortly after
+    await page.waitForFunction(k => JSON.parse(localStorage.getItem(k)).fullname === 'Ana López', STATE_KEY);
+    await page.reload();
+    assert.equal(await page.inputValue('#input-fullname'), 'Ana López');
+});
+
+test('pending changes are flushed when the page is hidden', async t => {
+    const { page } = await openApp(t);
+    await page.evaluate(() => {
+        const input = document.getElementById('input-title');
+        input.value = 'Flush test';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        window.dispatchEvent(new Event('pagehide'));
+    });
+    assert.equal((await storedState(page)).title, 'Flush test');
+});
+
+test('user text is rendered as text, never as HTML', async t => {
+    const { page } = await openApp(t);
+    await page.locator('summary', { has: page.locator('[data-i18n="sec_personal"]') }).click();
+    await page.fill('#input-fullname', '<img src=x onerror="window.__xss=1">');
+    await page.fill('#input-website', 'javascript:alert(1)');
+    assert.equal(await page.locator('#preview-fullname img').count(), 0);
+    assert.equal(await page.evaluate(() => window.__xss), undefined);
+    assert.match(await page.locator('#preview-website').getAttribute('href'), /^https:\/\//);
+});
+
+test('clear asks for confirmation in an accessible dialog and stays empty after reload', async t => {
+    const { page } = await openApp(t);
+    await page.click('#btn-clear-data');
+    const dialog = page.locator('#confirm-modal [role="alertdialog"]');
+    await dialog.waitFor({ state: 'visible' });
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'modal-btn-cancel');
+    await page.keyboard.press('Escape');
+    await modalIsClosed(page, 'confirm-modal');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'btn-clear-data', 'focus restored');
+
+    await page.click('#btn-clear-data');
+    await page.click('#modal-btn-confirm');
+    await page.locator('.toast').first().waitFor();
+    assert.equal(await page.inputValue('#input-fullname'), '');
+    assert.equal(await page.locator('#cv-preview-sheet .cv-item-block').count(), 0);
+    assert.match(await page.locator('#completeness-text').innerText(), /Falta: nombre/);
+
+    await page.reload();
+    await page.waitForTimeout(200);
+    assert.equal(await page.inputValue('#input-fullname'), '', 'cleared CV is not replaced by the sample');
+});
+
+test('language switch translates the UI and the untouched sample', async t => {
+    const { page } = await openApp(t);
+    await page.click('#lang-dropdown-header');
+    await page.click('#lang-dropdown-menu [data-lang="en"]');
+    assert.equal(await page.evaluate(() => document.documentElement.lang), 'en');
+    assert.equal(await page.inputValue('#input-title-education'), 'Education');
+    assert.match(await page.locator('#preview-experience').innerText(), /Senior Project Manager/);
+    assert.equal(await page.title(), 'ProCVX // Professional Resume Builder');
+    assert.equal(await page.locator('[data-i18n="sec_education"]').innerText(), 'Education');
+});
+
+test('theme and template dropdowns work with the keyboard and expose ARIA state', async t => {
+    const { page } = await openApp(t);
+    const header = page.locator('#theme-dropdown-header');
+    await header.focus();
+    await page.keyboard.press('Enter');
+    assert.equal(await header.getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.evaluate(() => document.activeElement.dataset.theme), 'sapphire');
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    assert.equal(await header.getAttribute('aria-expanded'), 'false');
+    assert.ok(await page.evaluate(() => document.body.classList.contains('theme-cyberpunk')));
+    assert.equal(await page.locator('[data-theme="cyberpunk"]').getAttribute('aria-selected'), 'true');
+    assert.equal(await page.locator('#theme-current-name').textContent(), 'Ciberpunk');
+
+    const tplHeader = page.locator('#template-dropdown-header');
+    await tplHeader.focus();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('End');
+    await page.keyboard.press('Escape');
+    assert.equal(await tplHeader.getAttribute('aria-expanded'), 'false');
+    await tplHeader.click();
+    await page.click('#template-dropdown-menu [data-template="minimal"]');
+    assert.ok(await page.evaluate(() => document.body.classList.contains('template-minimal')));
+    assert.equal(await page.locator('#template-selected-text svg').count(), 1);
+
+    await page.reload();
+    assert.ok(await page.evaluate(() =>
+        document.body.classList.contains('theme-cyberpunk') && document.body.classList.contains('template-minimal')));
+});
+
+test('section toggles and reordering update the preview and persist', async t => {
+    const { page } = await openApp(t);
+    await page.locator('.section-toggle[data-section="cv-section-projects"]').uncheck();
+    assert.equal(await page.locator('#cv-section-projects').isHidden(), true);
+
+    const order = () => page.evaluate(() => ['cv-section-projects', 'cv-section-experience']
+        .map(id => Number(document.getElementById(id).style.order)));
+    const [projBefore, expBefore] = await order();
+    assert.ok(expBefore < projBefore);
+    const experienceItem = page.locator('.accordion-item', { has: page.locator('[data-section="cv-section-experience"]') });
+    await experienceItem.locator('.btn-section-down').click();
+    const [projAfter, expAfter] = await order();
+    assert.ok(projAfter < expAfter);
+    assert.equal(await experienceItem.getAttribute('open'), null, 'arrow click does not open the accordion');
+
+    await page.reload();
+    assert.equal(await page.locator('#cv-section-projects').isHidden(), true);
+    const [p2, e2] = await order();
+    assert.ok(p2 < e2);
+});
+
+test('bullet textareas insert bullets and the preview never shows a bullet-less line', async t => {
+    const { page } = await openApp(t);
+    await page.locator('.accordion-item', { has: page.locator('#btn-add-experience') }).locator('summary').click();
+    await page.click('#btn-add-experience');
+    const item = page.locator('#experience-list .dynamic-item').last();
+    await item.locator('.exp-role').fill('QA');
+    const desc = item.locator('.exp-desc');
+    await desc.focus();
+    assert.equal(await desc.inputValue(), '• ');
+    await page.keyboard.type('Uno');
+    await page.keyboard.press('Enter');
+    await page.keyboard.type('D');
+    assert.equal(await desc.inputValue(), '• Uno\n• D');
+    const lastBlock = page.locator('#preview-experience .cv-item-block').last();
+    assert.equal(await lastBlock.locator('.cv-bullets li').count(), 2);
+    assert.equal(await lastBlock.locator('p').count(), 0);
+
+    // Remove + move controls
+    await item.locator('.btn-move-up').click();
+    assert.equal(await page.locator('#experience-list .dynamic-item').nth(2).locator('.exp-role').inputValue(), 'QA');
+    await page.locator('#experience-list .dynamic-item').nth(2).locator('.btn-remove-item').click();
+    await page.waitForFunction(() => document.querySelectorAll('#experience-list .dynamic-item').length === 3);
+});
+
+test('JSON export → import round trip; invalid files show a toast, not an alert', async t => {
+    const { page } = await openApp(t);
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('#btn-export-json')]);
+    assert.equal(download.suggestedFilename(), 'Alex_Torto_Ramos_ProCVX.json');
+    const exported = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+    assert.equal(exported.experience.length, 3);
+
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'procvx-'));
+    const bad = path.join(dir, 'bad.json');
+    fs.writeFileSync(bad, '[1,2');
+    await page.setInputFiles('#input-json-file', bad);
+    await page.locator('.toast-error').waitFor();
+
+    const good = path.join(dir, 'good.json');
+    fs.writeFileSync(good, JSON.stringify({
+        ...exported,
+        fullname: 'Importada Pérez',
+        photo: 'https://evil.example/track.png',
+        experience: [null, { role: 'Rol <b>', company: 'Co' }],
+        toggles: { 'cv-section-languages': false }
+    }));
+    await page.setInputFiles('#input-json-file', good);
+    await page.locator('.toast-success', { hasText: /correctamente/ }).waitFor();
+    assert.equal(await page.inputValue('#input-fullname'), 'Importada Pérez');
+    assert.equal(await page.locator('#preview-experience .cv-item-title').innerText(), 'Rol <b>');
+    assert.equal(await page.locator('#preview-photo').isHidden(), true, 'non data: photos are ignored');
+    assert.equal(await page.locator('#cv-section-languages').isHidden(), true);
+    assert.equal((await storedState(page)).fullname, 'Importada Pérez');
+});
+
+test('legal dialogs open from the footer and close with their button', async t => {
+    const { page } = await openApp(t);
+    await page.click('[data-open-modal="modal-privacidad"]');
+    const box = page.locator('#modal-privacidad [role="dialog"]');
+    await box.waitFor({ state: 'visible' });
+    assert.equal(await page.evaluate(() => document.getElementById('modal-privacidad').inert), false);
+    await page.click('[data-close-modal="modal-privacidad"]');
+    await modalIsClosed(page, 'modal-privacidad');
+});
+
+test('mobile: editor/preview switch and a scaled A4 preview without horizontal scroll', async t => {
+    const { page } = await openApp(t, { viewport: { width: 390, height: 844 } });
+    assert.equal(await page.locator('.mobile-view-switch').isVisible(), true);
+    assert.equal(await page.locator('.editor-panel').isVisible(), true);
+    assert.equal(await page.locator('.preview-panel').isVisible(), false);
+
+    await page.click('.mobile-view-btn[data-view="preview"]');
+    assert.equal(await page.locator('.editor-panel').isVisible(), false);
+    assert.equal(await page.locator('.preview-panel').isVisible(), true);
+    const zoom = Number(await page.locator('#cv-preview-sheet').evaluate(el => el.style.zoom));
+    assert.ok(zoom > 0.3 && zoom < 1, `sheet scaled (${zoom})`);
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    assert.ok(overflow <= 0, `no horizontal scroll (${overflow}px)`);
+});
+
+test('print/PDF: the CV prints from any view, on A4, with readable bullet order', async t => {
+    const { page } = await openApp(t, { viewport: { width: 390, height: 844 } });
+    // Mobile page in "editor" view: print must still output the CV
+    await page.emulateMedia({ media: 'print' });
+    const pdfPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'procvx-')), 'cv.pdf');
+    await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
+    const info = execFileSync('pdfinfo', [pdfPath]).toString();
+    const pages = Number(info.match(/Pages:\s+(\d+)/)[1]);
+    assert.equal(pages, 1, 'sample CV fits on one page');
+    const text = execFileSync('pdftotext', ['-layout', pdfPath, '-']).toString();
+    assert.match(text, /Alex Torto/);
+    assert.match(text, /•\s*Liderazgo de un equipo/, 'bullet precedes its text');
+    assert.doesNotMatch(text, /Editor de Datos|Vista previa/, 'no UI in the PDF');
+});
+
+test('data saved by previous versions still loads (backwards compatibility)', async t => {
+    const { page } = await openApp(t);
+    await page.evaluate(() => {
+        localStorage.setItem('procvx-state', JSON.stringify({
+            fullname: 'Usuario Antiguo',
+            github: 'github.com/antiguo',
+            skills: [{ name: 'Excel' }, { name: 'SQL' }],
+            languages: [{ name: 'English', level: 'Advanced' }],
+            experience: [{ role: 'Analista', company: 'ACME', dates: '2020', desc: '• Algo' }]
+        }));
+        localStorage.setItem('procvx-section-order', JSON.stringify([
+            'cv-section-summary', 'cv-section-projects', 'cv-section-experience', 'cv-section-education',
+            'cv-section-softskills', 'cv-section-skills', 'cv-section-languages'
+        ]));
+    });
+    await page.reload();
+    await page.waitForFunction(() => document.getElementById('input-fullname').value === 'Usuario Antiguo');
+    assert.equal(await page.inputValue('#input-link'), 'github.com/antiguo');
+    assert.equal(await page.inputValue('#input-skills'), 'Excel, SQL');
+    assert.equal(await page.locator('#languages-list .lang-level').inputValue(), 'Avanzado');
+    assert.equal(await page.inputValue('#input-title-experience'), 'Experiencia Laboral', 'default titles filled in');
+    const [proj, exp] = await page.evaluate(() => ['cv-section-projects', 'cv-section-experience']
+        .map(id => Number(document.getElementById(id).style.order)));
+    assert.ok(proj < exp, 'saved custom section order is kept');
+});
