@@ -3,7 +3,7 @@
 // ----------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-    const { defaultLanguage: DEFAULT_LANGUAGE, storageKeys: STORAGE_KEYS } = window.ProCVXConfig;
+    const { defaultLanguage: DEFAULT_LANGUAGE, storageKeys: STORAGE_KEYS, donateUrl: DONATE_URL } = window.ProCVXConfig;
     const translations = window.ProCVXTranslations;
     const SAMPLE_DATA = window.ProCVXSampleData;
     const {
@@ -1266,9 +1266,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalTitle = document.title;
         // The browser uses the page title as the default PDF file name
         document.title = `${getFileBaseName('Curriculum')}_ProCVX`;
-        window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
+        window.addEventListener('afterprint', () => {
+            document.title = originalTitle;
+            suggestDonation();
+        }, { once: true });
         window.print();
     });
+
+    // ----------------------------------------------------
+    // Donations (only when config.donateUrl is set)
+    // ----------------------------------------------------
+    const donateHref = /^https:\/\//.test(DONATE_URL || '') ? DONATE_URL : '';
+    const donateLink = $('donate-link');
+    if (donateLink && donateHref) {
+        donateLink.href = donateHref;
+        donateLink.hidden = false;
+    }
+
+    // Right after the user got their PDF: a gentle, once-per-session suggestion
+    let donationSuggested = false;
+    function suggestDonation() {
+        if (!donateHref || donationSuggested) return;
+        donationSuggested = true;
+        setTimeout(() => toast(tr('toast_donate'), 'info', 9000, { label: tr('toast_donate_action'), href: donateHref }), 600);
+    }
 
     // ----------------------------------------------------
     // Mobile: editor / preview switch and preview scaling

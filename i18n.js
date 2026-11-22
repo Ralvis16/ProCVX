@@ -106,6 +106,10 @@
             footer_legal: "Aviso Legal",
             footer_privacy: "Política de Privacidad",
             footer_storage: "Almacenamiento Local",
+            footer_guides: "Guías para hacer tu CV",
+            footer_donate: "Apoya ProCVX",
+            toast_donate: "¿Te ha sido útil ProCVX? Es gratis y sin anuncios gracias a tu apoyo.",
+            toast_donate_action: "Invítame a un café",
             legal_title: "Aviso Legal",
             legal_body: `
                 <p><strong>1. Datos Identificativos</strong><br>
@@ -308,6 +312,10 @@
             footer_legal: "Legal Notice",
             footer_privacy: "Privacy Policy",
             footer_storage: "Local Storage",
+            footer_guides: "Resume writing guides (Spanish)",
+            footer_donate: "Support ProCVX",
+            toast_donate: "Was ProCVX useful? It stays free and ad-free thanks to your support.",
+            toast_donate_action: "Buy me a coffee",
             legal_title: "Legal Notice",
             legal_body: `
                 <p><strong>1. Identifying Data</strong><br>

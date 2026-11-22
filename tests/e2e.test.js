@@ -33,6 +33,34 @@ async function openApp(t, { viewport = { width: 1440, height: 900 } } = {}) {
     return { page, context };
 }
 
+// Local http server for tests that need a real origin (service worker, pretty URLs).
+// Behaves like the Cloudflare host: "/" and "/dir/" serve index.html, /index.html redirects to /.
+async function startServer(t) {
+    const http = require('http');
+    const root = path.join(__dirname, '..');
+    const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
+        '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
+    const server = http.createServer((req, res) => {
+        let file = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+        // Behave like Cloudflare Pages: /index.html redirects to /
+        if (file === '/index.html') {
+            res.writeHead(308, { Location: '/' }).end();
+            return;
+        }
+        if (file.endsWith('/')) file += 'index.html';
+        const full = path.join(root, file);
+        if (!full.startsWith(root) || !fs.existsSync(full) || fs.statSync(full).isDirectory()) {
+            res.writeHead(404).end();
+            return;
+        }
+        res.writeHead(200, { 'Content-Type': types[path.extname(full)] || 'application/octet-stream' });
+        fs.createReadStream(full).pipe(res);
+    });
+    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+    t.after(() => server.close());
+    return `http://127.0.0.1:${server.address().port}/`;
+}
+
 const storedState = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)), STATE_KEY);
 const previewText = (page, id) => page.locator('#' + id).innerText();
 // Closed modals stay in the layout (faded out) but are inert, so they can't be focused or clicked
@@ -355,29 +383,7 @@ test('data saved by previous versions still loads (backwards compatibility)', as
 });
 
 test('offline: once visited over http, the app reloads and works without network', async t => {
-    const http = require('http');
-    const root = path.join(__dirname, '..');
-    const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
-        '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
-    const server = http.createServer((req, res) => {
-        let file = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-        // Behave like Cloudflare Pages: /index.html redirects to /
-        if (file === '/index.html') {
-            res.writeHead(308, { Location: '/' }).end();
-            return;
-        }
-        if (file.endsWith('/')) file += 'index.html';
-        const full = path.join(root, file);
-        if (!full.startsWith(root) || !fs.existsSync(full) || fs.statSync(full).isDirectory()) {
-            res.writeHead(404).end();
-            return;
-        }
-        res.writeHead(200, { 'Content-Type': types[path.extname(full)] || 'application/octet-stream' });
-        fs.createReadStream(full).pipe(res);
-    });
-    await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-    t.after(() => server.close());
-    const url = `http://127.0.0.1:${server.address().port}/`;
+    const url = await startServer(t);
 
     const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
     t.after(() => context.close());
@@ -411,4 +417,72 @@ test('offline: once visited over http, the app reloads and works without network
     await page.goto(url + 'index.html');
     await page.waitForFunction(() => document.getElementById('preview-title').textContent === 'Hecho sin conexión');
     assert.deepEqual(errors, []);
+});
+
+test('guides: readable on mobile and lead back to the app', async t => {
+    const url = await startServer(t);
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    t.after(() => context.close());
+    const page = await context.newPage();
+    const errors = [];
+    page.on('pageerror', e => errors.push(e.message));
+    page.on('response', r => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
+
+    await page.goto(url);
+    await page.click('a[href="guias/"]');
+    await page.waitForURL(url + 'guias/');
+    assert.equal(await page.locator('.cards a').count(), 3);
+
+    for (const slug of ['cv-sin-experiencia', 'cv-ats', 'cv-fp']) {
+        await page.goto(`${url}guias/${slug}/`);
+        assert.equal(await page.locator('h1').count(), 1);
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        assert.ok(overflow <= 0, `${slug}: no horizontal scroll (${overflow}px)`);
+    }
+
+    await page.click('.cta a');
+    await page.waitForURL(url);
+    await page.waitForFunction(() => document.getElementById('preview-fullname').textContent.includes('Alex'));
+    assert.deepEqual(errors, []);
+});
+
+test('donate link: hidden without a URL; with one, shown in the footer and suggested once after the PDF', async t => {
+    const url = await startServer(t);
+    const realConfig = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8');
+    assert.match(realConfig, /donateUrl: 'https:\/\/buymeacoffee\.com\/raniell166'/, 'production link configured');
+
+    async function pageWithDonateUrl(donateUrl) {
+        const context = await browser.newContext();
+        t.after(() => context.close());
+        const page = await context.newPage();
+        await page.route('**/config.js*', route => route.fulfill({
+            body: realConfig.replace(/donateUrl: '[^']*'/, `donateUrl: '${donateUrl}'`),
+            contentType: 'text/javascript'
+        }));
+        await page.goto(url);
+        await page.waitForFunction(() => document.getElementById('preview-fullname').textContent.includes('Alex'));
+        return page;
+    }
+
+    for (const bad of ['', 'javascript:alert(1)', 'http://insecure.example']) {
+        const hiddenPage = await pageWithDonateUrl(bad);
+        assert.equal(await hiddenPage.locator('#donate-link').isHidden(), true, `hidden for "${bad}"`);
+    }
+
+    const page = await pageWithDonateUrl('https://buymeacoffee.com/raniell166');
+    const link = page.locator('#donate-link');
+    await link.waitFor({ state: 'visible' });
+    assert.equal(await link.getAttribute('href'), 'https://buymeacoffee.com/raniell166');
+    assert.equal(await link.getAttribute('rel'), 'noopener');
+
+    // Simulate finishing the print dialog twice: the suggestion shows only once
+    await page.evaluate(() => { window.print = () => window.dispatchEvent(new Event('afterprint')); });
+    await page.click('#btn-export-pdf');
+    const toastLink = page.locator('.toast .toast-action');
+    await toastLink.waitFor();
+    assert.equal(await toastLink.getAttribute('href'), 'https://buymeacoffee.com/raniell166');
+    assert.equal(await toastLink.innerText(), 'Invítame a un café');
+    await page.click('#btn-export-pdf');
+    await page.waitForTimeout(900);
+    assert.equal(await page.locator('.toast .toast-action').count(), 1);
 });

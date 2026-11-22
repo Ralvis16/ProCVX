@@ -1737,3 +1737,40 @@ body.template-classic .cv-main-col {
 .selected-text {
     white-space: nowrap;
 }
+
+/* Footer: guides + donate links */
+.footer-extra {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.4rem 1rem;
+    margin-top: 0.4rem;
+}
+
+.footer-extra a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.footer-extra a:hover {
+    color: var(--color-text-main);
+    text-decoration: underline;
+}
+
+.donate-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.donate-link svg,
+.donate-link i {
+    width: 14px;
+    height: 14px;
+}
+
+.toast-action {
+    color: #93c5fd;
+    font-weight: 700;
+    margin-left: 0.25rem;
+}
