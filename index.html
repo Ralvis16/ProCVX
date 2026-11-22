@@ -32,10 +32,10 @@
     
     <!-- Idioma Dinámico: Definido en Javascript -->
     <!-- Fuentes y librerías alojadas en el propio sitio. Única petición externa: Cloudflare Web Analytics (sin cookies), inyectado por Cloudflare -->
-    <link rel="stylesheet" href="fonts/fonts.css?v=22">
+    <link rel="stylesheet" href="fonts/fonts.css?v=23">
     <script src="vendor/lucide.min.js"></script>
 
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=23">
 </head>
 <body class="theme-sapphire">
     <!-- App Container -->
@@ -151,309 +151,295 @@
                     <div class="editor-accordion">
                         
                         <!-- 1. Datos Personales -->
-                        <details class="accordion-item" data-fixed="true">
-                            <summary class="accordion-trigger">
-                                <span><i data-lucide="user"></i> <span data-i18n="sec_personal">Información Personal</span></span>
-                                <i data-lucide="chevron-down" class="chevron"></i>
-                            </summary>
-                            <div class="accordion-content grid-2">
-                                <div class="form-group form-group-full">
-                                    <label for="input-photo" data-i18n="lbl_photo">Fotografía de Perfil (Opcional)</label>
-                                    <div class="photo-row">
-                                        <input type="file" id="input-photo" accept="image/*">
-                                        <button type="button" id="btn-remove-photo" class="btn btn-secondary danger btn-icon-only" hidden data-i18n-title="tt_remove_photo" data-i18n-aria="tt_remove_photo" title="Eliminar Foto" aria-label="Eliminar Foto"><i data-lucide="trash-2"></i></button>
+                        <div class="accordion-item" data-fixed="true">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="user"></i> <span data-i18n="sec_personal">Información Personal</span></span>
+                                    <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content grid-2">
+                                    <div class="form-group form-group-full">
+                                        <label for="input-photo" data-i18n="lbl_photo">Fotografía de Perfil (Opcional)</label>
+                                        <div class="photo-row">
+                                            <input type="file" id="input-photo" accept="image/*">
+                                            <button type="button" id="btn-remove-photo" class="btn btn-secondary danger btn-icon-only" hidden data-i18n-title="tt_remove_photo" data-i18n-aria="tt_remove_photo" title="Eliminar Foto" aria-label="Eliminar Foto"><i data-lucide="trash-2"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-fullname" data-i18n="lbl_fullname">Nombre Completo</label>
+                                        <input type="text" id="input-fullname" data-i18n="ph_fullname" placeholder="Ej. Juan Pérez">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-title" data-i18n="lbl_title">Título Profesional / Especialidad</label>
+                                        <input type="text" id="input-title" data-i18n="ph_title" placeholder="Ej. Especialista en Marketing, Gestor de Proyectos">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-email" data-i18n="lbl_email">Correo Electrónico</label>
+                                        <input type="email" id="input-email" data-i18n="ph_email" placeholder="Ej. contacto@email.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-phone" data-i18n="lbl_phone">Teléfono</label>
+                                        <input type="tel" id="input-phone" data-i18n="ph_phone" placeholder="Ej. +34 600 000 000">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-link" data-i18n="lbl_link">Enlace Personal / Redes</label>
+                                        <input type="text" id="input-link" data-i18n="ph_link" placeholder="Ej. linkedin.com/in/usuario">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-linkedin" data-i18n="lbl_linkedin">LinkedIn (URL o Usuario)</label>
+                                        <input type="text" id="input-linkedin" data-i18n="ph_linkedin" placeholder="Ej. linkedin.com/in/tu-usuario">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-website" data-i18n="lbl_website">Web Personal / Portafolio</label>
+                                        <input type="text" id="input-website" data-i18n="ph_website" placeholder="Ej. tuweb.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-location" data-i18n="lbl_location">Ubicación</label>
+                                        <input type="text" id="input-location" data-i18n="ph_location" placeholder="Ej. Madrid, España">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="input-fullname" data-i18n="lbl_fullname">Nombre Completo</label>
-                                    <input type="text" id="input-fullname" data-i18n="ph_fullname" placeholder="Ej. Juan Pérez">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-title" data-i18n="lbl_title">Título Profesional / Especialidad</label>
-                                    <input type="text" id="input-title" data-i18n="ph_title" placeholder="Ej. Especialista en Marketing, Gestor de Proyectos">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-email" data-i18n="lbl_email">Correo Electrónico</label>
-                                    <input type="email" id="input-email" data-i18n="ph_email" placeholder="Ej. contacto@email.com">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-phone" data-i18n="lbl_phone">Teléfono</label>
-                                    <input type="tel" id="input-phone" data-i18n="ph_phone" placeholder="Ej. +34 600 000 000">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-link" data-i18n="lbl_link">Enlace Personal / Redes</label>
-                                    <input type="text" id="input-link" data-i18n="ph_link" placeholder="Ej. linkedin.com/in/usuario">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-linkedin" data-i18n="lbl_linkedin">LinkedIn (URL o Usuario)</label>
-                                    <input type="text" id="input-linkedin" data-i18n="ph_linkedin" placeholder="Ej. linkedin.com/in/tu-usuario">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-website" data-i18n="lbl_website">Web Personal / Portafolio</label>
-                                    <input type="text" id="input-website" data-i18n="ph_website" placeholder="Ej. tuweb.com">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-location" data-i18n="lbl_location">Ubicación</label>
-                                    <input type="text" id="input-location" data-i18n="ph_location" placeholder="Ej. Madrid, España">
-                                </div>
-                            </div>
-                        </details>
+                            </details>
+                        </div>
 
                         <!-- 2. Sobre Mí -->
-                        <details class="accordion-item" data-fixed="true">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-summary" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="file-text"></i> <span data-i18n="sec_profile">Perfil Profesional (Sobre mí)</span>
-                                </span>
-                                <i data-lucide="chevron-down" class="chevron"></i>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-profile" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-profile" data-i18n="ph_sec_profile" value="Perfil Profesional" placeholder="Ej. Sobre mí, Resumen...">
+                        <div class="accordion-item" data-fixed="true">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="file-text"></i> <span data-i18n="sec_profile">Perfil Profesional (Sobre mí)</span></span>
+                                    <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-profile" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-profile" data-i18n="ph_sec_profile" value="Perfil Profesional" placeholder="Ej. Sobre mí, Resumen...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-summary" data-i18n="lbl_summary">Breve descripción de ti y tus objetivos</label>
+                                        <textarea id="input-summary" rows="4" data-i18n="ph_summary" placeholder="Ej. Profesional con experiencia en gestión de equipos y optimización de procesos..."></textarea>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="input-summary" data-i18n="lbl_summary">Breve descripción de ti y tus objetivos</label>
-                                    <textarea id="input-summary" rows="4" data-i18n="ph_summary" placeholder="Ej. Profesional con experiencia en gestión de equipos y optimización de procesos..."></textarea>
-                                </div>
-                            </div>
-                        </details>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-summary" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                        </div>
 
                         <!-- 3. Experiencia Laboral -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-experience" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="briefcase"></i> <span data-i18n="sec_experience">Experiencia Laboral</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="briefcase"></i> <span data-i18n="sec_experience">Experiencia Laboral</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-experience" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-experience" data-i18n="ph_sec_experience" value="Experiencia Laboral" placeholder="Ej. Experiencia, Historial Laboral...">
+                                    </div>
+                                    <div id="experience-list" class="dynamic-list">
+                                        <!-- Dynamic items will be added here -->
+                                    </div>
+                                    <button type="button" id="btn-add-experience" class="btn btn-outline btn-sm">
+                                        <i data-lucide="plus"></i> <span data-i18n="btn_add_experience">Añadir Experiencia</span>
+                                    </button>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-experience" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-experience" data-i18n="ph_sec_experience" value="Experiencia Laboral" placeholder="Ej. Experiencia, Historial Laboral...">
-                                </div>
-                                <div id="experience-list" class="dynamic-list">
-                                    <!-- Dynamic items will be added here -->
-                                </div>
-                                <button type="button" id="btn-add-experience" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_experience">Añadir Experiencia</span>
-                                </button>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-experience" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 4. Proyectos Destacados -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-projects" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="folder-git-2"></i> <span data-i18n="sec_projects">Proyectos</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="folder-git-2"></i> <span data-i18n="sec_projects">Proyectos</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-projects" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-projects" data-i18n="ph_sec_projects" value="Proyectos" placeholder="Ej. Portafolio, Casos de Estudio...">
+                                    </div>
+                                    <div id="projects-list" class="dynamic-list">
+                                        <!-- Dynamic items will be added here -->
+                                    </div>
+                                    <button type="button" id="btn-add-project" class="btn btn-outline btn-sm">
+                                        <i data-lucide="plus"></i> <span data-i18n="btn_add_project">Añadir Proyecto</span>
+                                    </button>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-projects" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-projects" data-i18n="ph_sec_projects" value="Proyectos" placeholder="Ej. Portafolio, Casos de Estudio...">
-                                </div>
-                                <div id="projects-list" class="dynamic-list">
-                                    <!-- Dynamic items will be added here -->
-                                </div>
-                                <button type="button" id="btn-add-project" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_project">Añadir Proyecto</span>
-                                </button>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-projects" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 4.5. Voluntariado -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-volunteer" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="heart-handshake"></i> <span data-i18n="sec_volunteer">Voluntariado</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="heart-handshake"></i> <span data-i18n="sec_volunteer">Voluntariado</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-volunteer" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-volunteer" data-i18n="ph_sec_volunteer" value="Voluntariado" placeholder="Ej. Voluntariado, Acción Social...">
+                                    </div>
+                                    <div id="volunteer-list" class="dynamic-list">
+                                        <!-- Dynamic items will be added here -->
+                                    </div>
+                                    <button type="button" id="btn-add-volunteer" class="btn btn-outline btn-sm">
+                                        <i data-lucide="plus"></i> <span data-i18n="btn_add_volunteer">Añadir Voluntariado</span>
+                                    </button>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-volunteer" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-volunteer" data-i18n="ph_sec_volunteer" value="Voluntariado" placeholder="Ej. Voluntariado, Acción Social...">
-                                </div>
-                                <div id="volunteer-list" class="dynamic-list">
-                                    <!-- Dynamic items will be added here -->
-                                </div>
-                                <button type="button" id="btn-add-volunteer" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_volunteer">Añadir Voluntariado</span>
-                                </button>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-volunteer" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 5. Educación -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-education" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="graduation-cap"></i> <span data-i18n="sec_education">Educación</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="graduation-cap"></i> <span data-i18n="sec_education">Educación</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-education" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-education" data-i18n="ph_sec_education" value="Formación" placeholder="Ej. Educación, Estudios...">
+                                    </div>
+                                    <div id="education-list" class="dynamic-list">
+                                        <!-- Dynamic items will be added here -->
+                                    </div>
+                                    <button type="button" id="btn-add-education" class="btn btn-outline btn-sm">
+                                        <i data-lucide="plus"></i> <span data-i18n="btn_add_education">Añadir Formación</span>
+                                    </button>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-education" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-education" data-i18n="ph_sec_education" value="Formación" placeholder="Ej. Educación, Estudios...">
-                                </div>
-                                <div id="education-list" class="dynamic-list">
-                                    <!-- Dynamic items will be added here -->
-                                </div>
-                                <button type="button" id="btn-add-education" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_education">Añadir Formación</span>
-                                </button>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-education" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 5.5. Certificaciones -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-certifications" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="award"></i> <span data-i18n="sec_certifications">Certificaciones</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="award"></i> <span data-i18n="sec_certifications">Certificaciones</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-certifications" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-certifications" data-i18n="ph_sec_certifications" value="Certificaciones" placeholder="Ej. Certificaciones, Cursos...">
+                                    </div>
+                                    <div id="certifications-list" class="dynamic-list">
+                                        <!-- Dynamic items will be added here -->
+                                    </div>
+                                    <button type="button" id="btn-add-certification" class="btn btn-outline btn-sm">
+                                        <i data-lucide="plus"></i> <span data-i18n="btn_add_certification">Añadir Certificación</span>
+                                    </button>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-certifications" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-certifications" data-i18n="ph_sec_certifications" value="Certificaciones" placeholder="Ej. Certificaciones, Cursos...">
-                                </div>
-                                <div id="certifications-list" class="dynamic-list">
-                                    <!-- Dynamic items will be added here -->
-                                </div>
-                                <button type="button" id="btn-add-certification" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_certification">Añadir Certificación</span>
-                                </button>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-certifications" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 6.5. Habilidades (Nueva) -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-softskills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="star"></i> <span data-i18n="sec_softskills">Habilidades</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="star"></i> <span data-i18n="sec_softskills">Habilidades</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-softskills" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-softskills" data-i18n="ph_sec_softskills" value="Habilidades" placeholder="Ej. Habilidades Blandas, Competencias...">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="input-softskills-desc" data-i18n="lbl_softskills_list">Lista de Habilidades</label>
+                                        <textarea id="input-softskills-desc" class="bullet-textarea" rows="5" data-i18n="ph_softskills_list" placeholder="Escribe tus habilidades aquí..."></textarea>
+                                    </div>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-softskills" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-softskills" data-i18n="ph_sec_softskills" value="Habilidades" placeholder="Ej. Habilidades Blandas, Competencias...">
-                                </div>
-                                <div class="form-group">
-                                    <label for="input-softskills-desc" data-i18n="lbl_softskills_list">Lista de Habilidades</label>
-                                    <textarea id="input-softskills-desc" class="bullet-textarea" rows="5" data-i18n="ph_softskills_list" placeholder="Escribe tus habilidades aquí..."></textarea>
-                                </div>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-softskills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 6. Tecnologías -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-skills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="terminal"></i> <span data-i18n="sec_tech">Tecnología</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="terminal"></i> <span data-i18n="sec_tech">Tecnología</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-skills" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-skills" data-i18n="ph_sec_tech" value="Tecnología" placeholder="Ej. Tecnologías, Herramientas...">
+                                    </div>
+                                    <div id="skills-list" class="dynamic-list">
+                                        <!-- Dynamic skill items will go here -->
+                                    </div>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-skills" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-skills" data-i18n="ph_sec_tech" value="Tecnología" placeholder="Ej. Tecnologías, Herramientas...">
-                                </div>
-                                <div id="skills-list" class="dynamic-list">
-                                    <!-- Dynamic skill items will go here -->
-                                </div>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-skills" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                         <!-- 7. Idiomas -->
-                        <details class="accordion-item">
-                            <summary class="accordion-trigger">
-                                <span>
-                                    <input type="checkbox" class="section-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-languages" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
-                                    <i data-lucide="languages"></i> <span data-i18n="sec_languages">Idiomas</span>
-                                </span>
-                                <div class="summary-actions">
-                                    <div class="section-controls">
-                                        <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
-                                        <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
-                                        <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
-                                    </div>
+                        <div class="accordion-item">
+                            <details class="accordion-details">
+                                <summary class="accordion-trigger">
+                                    <span class="accordion-title"><i data-lucide="languages"></i> <span data-i18n="sec_languages">Idiomas</span></span>
                                     <i data-lucide="chevron-down" class="chevron"></i>
+                                </summary>
+                                <div class="accordion-content">
+                                    <div class="form-group">
+                                        <label for="input-title-languages" data-i18n="lbl_sec_title">Título de la sección</label>
+                                        <input type="text" id="input-title-languages" data-i18n="ph_sec_languages" value="Idiomas" placeholder="Ej. Idiomas, Lenguas...">
+                                    </div>
+                                    <div id="languages-list" class="dynamic-list">
+                                        <!-- Dynamic language items will go here -->
+                                    </div>
+                                    <button type="button" id="btn-add-language" class="btn btn-outline btn-sm">
+                                        <i data-lucide="plus"></i> <span data-i18n="btn_add_language">Añadir Idioma</span>
+                                    </button>
                                 </div>
-                            </summary>
-                            <div class="accordion-content">
-                                <div class="form-group">
-                                    <label for="input-title-languages" data-i18n="lbl_sec_title">Título de la sección</label>
-                                    <input type="text" id="input-title-languages" data-i18n="ph_sec_languages" value="Idiomas" placeholder="Ej. Idiomas, Lenguas...">
-                                </div>
-                                <div id="languages-list" class="dynamic-list">
-                                    <!-- Dynamic language items will go here -->
-                                </div>
-                                <button type="button" id="btn-add-language" class="btn btn-outline btn-sm">
-                                    <i data-lucide="plus"></i> <span data-i18n="btn_add_language">Añadir Idioma</span>
-                                </button>
+                            </details>
+                            <input type="checkbox" class="section-toggle accordion-toggle" checked data-i18n-aria="tt_toggle_section" aria-label="Activar/Desactivar sección" data-section="cv-section-languages" data-i18n-title="tt_toggle_section" title="Activar/Desactivar sección">
+                            <div class="section-controls accordion-tools">
+                                <div class="drag-handle" data-i18n-title="tt_drag_move" title="Arrastrar para mover"><i data-lucide="grip-vertical"></i></div>
+                                <button type="button" class="btn-section-up" data-i18n-title="tt_move_up" data-i18n-aria="tt_move_up" title="Subir sección" aria-label="Subir sección"><i data-lucide="arrow-up"></i></button>
+                                <button type="button" class="btn-section-down" data-i18n-title="tt_move_down" data-i18n-aria="tt_move_down" title="Bajar sección" aria-label="Bajar sección"><i data-lucide="arrow-down"></i></button>
                             </div>
-                        </details>
+                        </div>
 
                     </div>
                 </div>
@@ -703,13 +689,13 @@
 
     <!-- Scripts -->
     <script src="vendor/Sortable.min.js"></script>
-    <script src="config.js?v=22"></script>
-    <script src="storage.js?v=22"></script>
-    <script src="utils.js?v=22"></script>
-    <script src="ui.js?v=22"></script>
-    <script src="i18n.js?v=22"></script>
-    <script src="sample-data.js?v=22"></script>
-    <script src="script.js?v=22"></script>
+    <script src="config.js?v=23"></script>
+    <script src="storage.js?v=23"></script>
+    <script src="utils.js?v=23"></script>
+    <script src="ui.js?v=23"></script>
+    <script src="i18n.js?v=23"></script>
+    <script src="sample-data.js?v=23"></script>
+    <script src="script.js?v=23"></script>
     
     <!-- SEO Text (Visually Hidden) -->
     <div class="visually-hidden">
