@@ -13,7 +13,20 @@ const APP_URL = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const STATE_KEY = 'procvx-state';
 
 let browser;
-test.before(async () => { browser = await chromium.launch(); });
+test.before(async () => {
+    const real = await chromium.launch();
+    // Every context gets the Cloudflare analytics beacon stubbed (tests must not depend on external hosts)
+    browser = Object.create(real);
+    browser.newContext = async options => {
+        const context = await real.newContext(options);
+        await context.route('https://static.cloudflareinsights.com/**', route => route.fulfill({
+            body: 'window.__beaconLoaded = true;', contentType: 'text/javascript',
+            headers: { 'Access-Control-Allow-Origin': '*' }
+        }));
+        return context;
+    };
+    browser.close = () => real.close();
+});
 test.after(async () => { await browser?.close(); });
 
 // Fresh context (= empty localStorage) per test; fails the test on JS errors or native dialogs.
@@ -606,6 +619,7 @@ test('Content-Security-Policy from _headers: the whole app and the guides work w
     await page.click('.mobile-view-btn[data-view="preview"]').catch(() => {});
     await page.evaluate(() => navigator.serviceWorker.ready);
 
+    assert.equal(await page.evaluate(() => window.__beaconLoaded), true, 'analytics beacon allowed by the CSP');
     assert.deepEqual(await page.evaluate(() => window.__cspViolations), [], 'no CSP violations in the app');
 
     // Guides (with JSON-LD blocks)

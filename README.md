@@ -29,7 +29,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 *   **Funciona sin Conexión (PWA):** Tras la primera visita desde la web publicada, un *service worker* guarda los archivos de la aplicación, así que se puede abrir y usar sin internet. También se puede instalar como app desde el navegador. La copia en caché no contiene datos del usuario.
 *   **Guías para hacer un CV:** páginas en `guias/` (CV sin experiencia, CV compatible con ATS, CV para FP) pensadas para atraer visitas desde Google, con `sitemap.xml` y `robots.txt`.
 *   **Donaciones opcionales:** un enlace discreto en el pie y una sugerencia tras exportar el PDF (una vez por sesión). Solo aparecen si hay un enlace configurado.
-*   **Privacidad Real:** Todo se procesa en tu navegador y los datos del CV nunca salen del dispositivo. Librerías, iconos y tipografías se alojan en el propio proyecto. Las visitas se miden con Cloudflare Web Analytics (sin cookies), que Cloudflare añade automáticamente al servir la web.
+*   **Privacidad Real:** Todo se procesa en tu navegador y los datos del CV nunca salen del dispositivo. Librerías, iconos y tipografías se alojan en el propio proyecto. Las visitas se miden con Cloudflare Web Analytics (sin cookies), con el script incluido en `index.html` y en las guías (instalación manual: la automática no funciona con Workers ni para visitantes de la UE).
 
 ---
 
