@@ -1,10 +1,16 @@
-# Cloudflare Pages: HTTP headers (https://developers.cloudflare.com/pages/configuration/headers/)
+# Cloudflare (Workers static assets / Pages): HTTP headers
+# https://developers.cloudflare.com/workers/static-assets/headers/
+#
+# Content-Security-Policy: only our own files may run, plus Cloudflare Web Analytics
+# (injected by Cloudflare). Photos are read locally as blob:/data: URLs.
+# Inline scripts and inline styles are not allowed.
 
 /*
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(), geolocation=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; connect-src 'self' https://cloudflareinsights.com; img-src 'self' data: blob:; style-src 'self'; font-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
 # Always revalidate the page and the service worker so new versions arrive immediately
 /

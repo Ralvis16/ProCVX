@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const { createIcons, toast } = window.ProCVXUI;
 
     const SAVE_DELAY_MS = 400;
+    const MAX_IMPORT_BYTES = 5 * 1024 * 1024; // a CV with photo is well under 1 MB
     const DEFAULT_SECTION_ORDER = [
         'cv-section-summary',
         'cv-section-experience',
@@ -90,9 +91,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ----------------------------------------------------
     // i18n
     // ----------------------------------------------------
-    function getCurrentLanguage() {
+    // Read once from storage; afterwards kept in memory (tr() runs many times per keystroke)
+    let currentLanguage = (() => {
         const savedLanguage = readStorage(STORAGE_KEYS.language);
         return savedLanguage && translations[savedLanguage] ? savedLanguage : DEFAULT_LANGUAGE;
+    })();
+
+    function getCurrentLanguage() {
+        return currentLanguage;
     }
 
     function getTranslations(language = getCurrentLanguage()) {
@@ -896,7 +902,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const lang = option.getAttribute('data-lang');
         closeDropdown(langContainer);
-        writeStorage(STORAGE_KEYS.language, lang);
+        currentLanguage = translations[lang] ? lang : DEFAULT_LANGUAGE;
+        writeStorage(STORAGE_KEYS.language, currentLanguage);
         markLanguage(lang);
         updateLanguage(lang);
         // If the untouched sample is showing, reload it in the new language
@@ -1232,6 +1239,11 @@ document.addEventListener('DOMContentLoaded', () => {
     inputJsonFile?.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (!file) return;
+        if (file.size > MAX_IMPORT_BYTES) {
+            toast(tr('alert_import_too_large'), 'error');
+            inputJsonFile.value = '';
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             const importedState = parseJson(e.target.result);

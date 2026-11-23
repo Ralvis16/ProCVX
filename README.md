@@ -38,7 +38,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 *   **HTML5** semántico.
 *   **CSS3** (variables nativas, glassmorphism, Grid y Flexbox).
 *   **JavaScript Vanilla** (modular y defensivo).
-*   **[Lucide](https://lucide.dev)** 1.63.0 (iconos SVG) y **[SortableJS](https://sortablejs.github.io/Sortable/)** 1.15.7 (arrastrar secciones), alojadas en `vendor/`.
+*   **[Lucide](https://lucide.dev)** 1.63.0 (iconos SVG; solo los usados, generados con `tools/build-icons.js`) y **[SortableJS](https://sortablejs.github.io/Sortable/)** 1.15.7 (arrastrar secciones), alojadas en `vendor/`.
 *   Tipografías **Outfit**, **Plus Jakarta Sans** y **JetBrains Mono** (licencia OFL), alojadas en `fonts/`.
 
 ---
@@ -47,7 +47,8 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 
 *   **Modularidad en JS:** `script.js` coordina la aplicación y delega persistencia, utilidades de texto e integración visual en módulos independientes.
 *   **Factory Pattern:** Los bloques dinámicos del editor (experiencias, idiomas, etc.) se crean con funciones de fábrica.
-*   **Seguridad:** Todo texto del usuario se escapa antes de insertarse en el HTML (también al importar un JSON).
+*   **Seguridad:** Todo texto del usuario se escapa antes de insertarse en el HTML (también al importar un JSON, que además tiene un límite de 5 MB). Una **Content-Security-Policy** (en `_headers`) solo permite ejecutar código del propio sitio y de Cloudflare Web Analytics, y el HTML no contiene scripts ni estilos en línea.
+*   **Rendimiento:** solo se envían los iconos que se usan (`vendor/icons.js`, ~8 KB en lugar de ~460 KB) y los scripts se cargan con `defer`, para que la página se pinte antes.
 *   **Carga en bloque:** Al cargar muchos elementos (ejemplo o datos guardados) la interfaz se refresca una sola vez.
 *   **CSS Estructurado:** Estilos separados de la estructura y selectores semánticos.
 
@@ -96,13 +97,14 @@ ProCVX/
 ├── sw.js               # Service worker (modo sin conexión)
 ├── guias/             # Guías (generadas con tools/build-guides.py)
 ├── sitemap.xml / robots.txt
-├── _headers            # Cabeceras HTTP para Cloudflare Pages (caché y seguridad)
+├── _headers            # Cabeceras HTTP para Cloudflare (caché, seguridad y Content-Security-Policy)
+├── .assetsignore       # Archivos del repositorio que NO se publican (tests, tools, README...)
 ├── manifest.webmanifest # Datos para instalar la app (PWA)
 ├── icons/              # Iconos PNG de la app (192, 512 y maskable)
 ├── favicon.svg         # Icono de la pestaña
 ├── og-image.png        # Imagen al compartir el enlace (1200×630)
 ├── tests/              # Tests unitarios y end-to-end (Playwright)
-├── tools/              # bump-version.js (versiones de caché)
+├── tools/              # bump-version.js, build-icons.js, build-guides.py (no se publican)
 ├── fonts/              # Tipografías alojadas (fonts.css + files/*.woff2) y licencias
 ├── vendor/             # Lucide y SortableJS alojados, con sus licencias
 ├── LICENSE
@@ -114,6 +116,8 @@ ProCVX/
 > **Modo sin conexión:** si añades un archivo nuevo que la app necesite (otro `.js`, una fuente...), inclúyelo en la lista `APP_SHELL` de `sw.js` y sube el número de `CACHE_NAME`. El service worker solo funciona servido por `http(s)` (no abriendo `index.html` como archivo).
 
 > **Publicación:** la web oficial es https://procvx.com (Cloudflare Pages, desplegada desde la rama `main`). Esa URL figura en las etiquetas `og:url`, `og:image`, `twitter:image` y `canonical` de `index.html`; si cambia el dominio, actualízalas. El archivo `_headers` indica a Cloudflare que no guarde en caché `index.html` ni `sw.js` (así las actualizaciones llegan al momento) y añade cabeceras de seguridad básicas.
+
+> **Content-Security-Policy:** si algún día añades un servicio externo (otro script de analítica, un widget, un sistema de pagos…), añade su dominio a la cabecera `Content-Security-Policy` de `_headers`; si no, el navegador lo bloqueará. El test `Content-Security-Policy from _headers` comprueba que la app funciona con la política real.
 
 ---
 
