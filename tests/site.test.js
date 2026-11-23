@@ -72,3 +72,33 @@ for (const file of guidePages) {
 test('the app links to the guides', () => {
     assert.match(read('index.html'), /href="guias\/"/);
 });
+
+// ---- Deployment hygiene ----
+const ignored = read('.assetsignore').split('\n').map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+const isIgnored = file => ignored.some(p => file === p || file.startsWith(p + '/'));
+const appShell = [...read('sw.js').matchAll(/'\.\/([^']*)'/g)].map(m => m[1] || 'index.html');
+
+test('.assetsignore keeps repository-only files off the website', () => {
+    for (const p of ['.git', 'tests', 'tools', 'node_modules', 'package.json', 'README.md']) {
+        assert.ok(ignored.includes(p), `${p} is ignored`);
+    }
+});
+
+test('every file the website needs is published (not ignored) and exists', () => {
+    const needed = [...appShell, ...sitemapUrls.map(urlToFile), '_headers', 'robots.txt', 'sitemap.xml', 'og-image.png'];
+    for (const file of needed) {
+        assert.ok(!isIgnored(file), `${file} is not ignored`);
+        assert.ok(fs.existsSync(path.join(ROOT, file)), `${file} exists`);
+    }
+});
+
+test('vendor/icons.js contains exactly the icons used in the code (run tools/build-icons.js)', () => {
+    global.window = global;
+    delete require.cache[require.resolve('../vendor/icons.js')];
+    require('../vendor/icons.js');
+    const used = new Set();
+    for (const file of ['index.html', ...fs.readdirSync(ROOT).filter(f => f.endsWith('.js'))]) {
+        for (const [, name] of read(file).matchAll(/data-lucide="([a-z0-9-]+)"/g)) used.add(name);
+    }
+    assert.deepEqual([...window.ProCVXIcons.names].sort(), [...used].sort());
+});

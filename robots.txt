@@ -1,6 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /tests/
-Disallow: /tools/
 
 Sitemap: https://procvx.com/sitemap.xml
