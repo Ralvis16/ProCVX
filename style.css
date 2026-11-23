@@ -2,6 +2,12 @@
    ProCVX - Styles: themes, editor, CV templates, print and responsive rules
    ---------------------------------------------------- */
 
+/* Mobile browsers must not "inflate" text on their own (it broke the scaled A4 preview) */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+}
+
 /* Reset & Base Rules */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -719,7 +725,7 @@ body {
     color: var(--cv-text-dark);
     width: var(--a4-width);
     min-height: var(--a4-height);
-    /* Keep the real A4 width: on narrow screens it is scaled with zoom (script.js), never squeezed */
+    /* Keep the real A4 width: on narrow screens it is scaled with transform (fitPreview in script.js), never squeezed */
     flex-shrink: 0;
     padding: 18mm 16mm;
     display: flex;
@@ -1376,7 +1382,7 @@ body.template-classic .cv-main-col {
     }
 
     .cv-sheet {
-        zoom: 1 !important;
+        transform: none !important;
         width: 100% !important;
         max-width: none !important;
         margin: 0 auto !important;
@@ -1743,4 +1749,25 @@ body.template-classic .cv-main-col {
 
 .modal-header {
     flex-shrink: 0;
+}
+
+/* Frame around the A4 sheet: on narrow screens it takes the scaled size (set in script.js) */
+.cv-sheet-frame {
+    flex-shrink: 0;
+}
+
+.cv-sheet-frame.is-scaled {
+    overflow: hidden;
+}
+
+.cv-sheet-frame.is-scaled > .cv-sheet {
+    transform-origin: top left;
+}
+
+@media print {
+    .cv-sheet-frame {
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
+    }
 }
