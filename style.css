@@ -1,5 +1,5 @@
 /* ----------------------------------------------------
-   DevCV Style Sheets - Custom Premium Styling & Themes
+   ProCVX - Styles: themes, editor, CV templates, print and responsive rules
    ---------------------------------------------------- */
 
 /* Reset & Base Rules */
@@ -310,10 +310,6 @@ body {
     font-weight: 500;
 }
 
-.theme-buttons {
-    display: flex;
-    gap: 0.5rem;
-}
 
 .theme-btn {
     width: 24px;
@@ -652,8 +648,6 @@ body {
     transition: all 0.2s ease;
     min-width: 32px;
     min-height: 32px;
-    position: relative;
-    z-index: 999 !important;
 }
 
 .btn-item-control i,
@@ -980,20 +974,6 @@ body {
     border-radius: 4px;
 }
 
-/* Competencias Sidebar tags */
-.cv-skill-group {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-}
-
-.cv-skill-group h4 {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--cv-text-medium);
-    text-transform: uppercase;
-    letter-spacing: 0.2px;
-}
 
 .cv-tags {
     display: flex;
@@ -1015,21 +995,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.4rem;
-}
-
-.cv-language-item {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
-.cv-language-item .lang-name {
-    color: var(--cv-text-dark);
-}
-
-.cv-language-item .lang-level {
-    color: var(--cv-accent);
 }
 
 
@@ -1314,39 +1279,6 @@ body.template-classic .cv-main-col {
 }
 
 
-
-
-
-.template-buttons {
-    display: flex;
-    gap: 0.25rem;
-    background-color: var(--color-input-bg);
-    padding: 0.25rem;
-    border-radius: 8px;
-    border: 1px solid var(--color-editor-border);
-}
-
-.btn-template {
-    font-size: 0.8rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    border: none;
-    background-color: transparent;
-    cursor: pointer;
-    color: var(--color-text-muted);
-    transition: all 0.2s ease;
-}
-
-.btn-template:hover {
-    color: var(--color-text-main);
-    background-color: rgba(255, 255, 255, 0.05);
-}
-
-.btn-template.active {
-    color: var(--color-text-main);
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
 /* Section Controls */
 .section-controls {
     display: flex;
@@ -1378,8 +1310,6 @@ body.template-classic .cv-main-col {
     transition: background-color 0.2s ease, color 0.2s ease;
     min-width: 32px;
     min-height: 32px;
-    position: relative;
-    z-index: 999 !important;
 }
 
 .btn-section-up i,
@@ -1397,18 +1327,6 @@ body.template-classic .cv-main-col {
     color: var(--color-text-main);
 }
 
-
-
-
-/* Fix for input editing issues in certain browsers */
-.form-group input,
-.form-group textarea,
-.form-group label {
-    pointer-events: auto !important;
-    user-select: auto !important;
-    z-index: 10;
-    position: relative;
-}
 
 .btn-item-control:disabled {
     opacity: 0.3;
@@ -1469,7 +1387,6 @@ body.template-classic .cv-main-col {
     }
 
 
-
     .cv-section > *:not(:last-child) { margin-bottom: 0.75rem !important; }
     .cv-list-block > *:not(:last-child) { margin-bottom: 1rem !important; }
     .cv-item-block > *:not(:last-child) { margin-bottom: 0.2rem !important; }
@@ -1525,11 +1442,6 @@ body.template-classic .cv-main-col {
     padding: 0.5rem;
 }
 
-.summary-actions {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
 
 .accordion-trigger.is-draggable {
     cursor: grab;
@@ -1814,4 +1726,21 @@ body.template-classic .cv-main-col {
     top: 0;
     right: calc(1rem + 18px + 0.5rem);
     height: 3.5rem;
+}
+
+/* Long dialogs (legal texts): never taller than the screen; the header with the close
+   button stays visible and the body scrolls */
+.modal-box {
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100dvh - 2rem);
+}
+
+.modal-box .modal-body {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.modal-header {
+    flex-shrink: 0;
 }

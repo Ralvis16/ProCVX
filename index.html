@@ -32,10 +32,9 @@
     
     <!-- Idioma Dinámico: Definido en Javascript -->
     <!-- Fuentes y librerías alojadas en el propio sitio. Única petición externa: Cloudflare Web Analytics (sin cookies), inyectado por Cloudflare -->
-    <link rel="stylesheet" href="fonts/fonts.css?v=23">
-    <script src="vendor/lucide.min.js"></script>
+    <link rel="stylesheet" href="fonts/fonts.css?v=25">
 
-    <link rel="stylesheet" href="style.css?v=23">
+    <link rel="stylesheet" href="style.css?v=25">
 </head>
 <body class="theme-sapphire">
     <!-- App Container -->
@@ -620,14 +619,7 @@
                 <h3 class="legal-title" id="modal-aviso-legal-title" data-i18n="legal_title">Aviso Legal</h3>
                 <button type="button" class="btn-close-modal" data-close-modal="modal-aviso-legal" data-i18n-aria="tt_close" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
-            <div class="modal-body legal-body" data-i18n-html="legal_body">
-                <p><strong>1. Datos Identificativos</strong><br>
-                En cumplimiento con el deber de información recogido en el artículo 10 de la Ley 34/2002, de 11 de julio, de Servicios de la Sociedad de la Información y del Comercio Electrónico (LSSICE), se informa que este sitio web es propiedad de Raniell Alvis, con domicilio en Barcelona, y correo electrónico de contacto: contacto@procvx.com.</p>
-                <p><strong>2. Uso del Portal</strong><br>
-                Esta aplicación proporciona acceso a herramientas de creación de currículums. El usuario asume la responsabilidad del uso del portal y se compromete a hacer un uso adecuado de sus funcionalidades.</p>
-                <p><strong>3. Propiedad Intelectual e Industrial</strong><br>
-                Todos los derechos reservados. Los diseños, estructura, código (excluyendo librerías de terceros open-source) y recursos son propiedad del responsable de la web.</p>
-            </div>
+            <div class="modal-body legal-body" data-i18n-html="legal_body"><!-- Filled from i18n.js (legal_body) --></div>
         </div>
     </div>
 
@@ -637,20 +629,7 @@
                 <h3 class="legal-title" id="modal-privacidad-title" data-i18n="privacy_title">Política de Privacidad</h3>
                 <button type="button" class="btn-close-modal" data-close-modal="modal-privacidad" data-i18n-aria="tt_close" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
-            <div class="modal-body legal-body" data-i18n-html="privacy_body">
-                <p><strong>Privacidad desde el Diseño (Client-Side Processing)</strong><br>
-                Esta herramienta ha sido desarrollada bajo el principio de máxima privacidad. <strong>Los datos que escribes en tu currículum nunca salen de tu dispositivo:</strong> no los almacenamos, transmitimos ni procesamos en ningún servidor.</p>
-                <p><strong>1. Procesamiento de Datos Personales</strong><br>
-                Toda la información ingresada por el usuario (nombres, teléfonos, correos electrónicos, historial laboral y fotografías) es procesada <strong>exclusivamente en el navegador web local</strong> del dispositivo.</p>
-                <p><strong>2. Generación del Documento</strong><br>
-                La generación del archivo PDF se realiza localmente mediante la función de impresión de tu propio navegador. Ningún documento final ni dato intermediario viaja por internet hacia los creadores de esta página ni hacia terceros.</p>
-                <p><strong>3. Responsabilidad del Usuario</strong><br>
-                Al ser una aplicación 100% del lado del cliente, es responsabilidad exclusiva del usuario proteger la información generada o descargada en su propio dispositivo.</p>
-                <p><strong>4. Estadísticas de Visitas</strong><br>
-                Para saber cuántas personas usan ProCVX y qué páginas visitan, utilizamos <strong>Cloudflare Web Analytics</strong>. Este servicio <strong>no usa cookies</strong> ni guarda nada en tu navegador, y no te sigue de un sitio web a otro: solo recoge estadísticas agregadas y anónimas de la visita (página vista, web de procedencia, tipo de navegador y dispositivo, y país). El contenido de tu currículum <strong>nunca</strong> se envía. Más información en la <a href="https://www.cloudflare.com/privacypolicy/" target="_blank" rel="noopener">política de privacidad de Cloudflare</a>.</p>
-                <p><strong>5. Recursos y Enlaces de Terceros</strong><br>
-                Las librerías, los iconos y las tipografías se alojan en el propio sitio. El único recurso externo es el script de estadísticas de Cloudflare indicado arriba. El enlace de donaciones lleva a Buy Me a Coffee, que aplica su propia política de privacidad solo si decides visitarlo.</p>
-            </div>
+            <div class="modal-body legal-body" data-i18n-html="privacy_body"><!-- Filled from i18n.js (privacy_body) --></div>
         </div>
     </div>
 
@@ -660,17 +639,7 @@
                 <h3 class="legal-title" id="modal-storage-title" data-i18n="storage_title">Almacenamiento Local y Cookies</h3>
                 <button type="button" class="btn-close-modal" data-close-modal="modal-storage" data-i18n-aria="tt_close" aria-label="Cerrar"><i data-lucide="x"></i></button>
             </div>
-            <div class="modal-body legal-body" data-i18n-html="storage_body">
-                <p><strong>Sin Cookies</strong><br>
-                Este sitio web <strong>no utiliza cookies</strong>: ni de seguimiento, ni de publicidad, ni de analítica. Las estadísticas de visitas (Cloudflare Web Analytics) funcionan sin cookies y sin guardar nada en tu navegador.</p>
-                <p><strong>Uso de LocalStorage (Almacenamiento Local)</strong><br>
-                Para mejorar la experiencia del usuario y evitar la pérdida de información en caso de que la página se cierre o recargue accidentalmente, utilizamos la memoria de tu navegador (<code>localStorage</code>) con el único fin de:</p>
-                <ul>
-                    <li>Guardar temporalmente los textos, listas y el progreso de tu currículum.</li>
-                    <li>Recordar tus preferencias de diseño, colores y orden de las secciones.</li>
-                </ul>
-                <p>Estos datos <strong>nunca abandonan tu dispositivo</strong> y puedes eliminarlos en cualquier momento utilizando el botón "Limpiar Datos" dentro de la aplicación, o borrando los datos de navegación de tu navegador.</p>
-            </div>
+            <div class="modal-body legal-body" data-i18n-html="storage_body"><!-- Filled from i18n.js (storage_body) --></div>
         </div>
     </div>
 
@@ -687,15 +656,16 @@
     <!-- Toast notifications -->
     <div class="toast-region no-print" id="toast-region" role="status" aria-live="polite"></div>
 
-    <!-- Scripts -->
-    <script src="vendor/Sortable.min.js"></script>
-    <script src="config.js?v=23"></script>
-    <script src="storage.js?v=23"></script>
-    <script src="utils.js?v=23"></script>
-    <script src="ui.js?v=23"></script>
-    <script src="i18n.js?v=23"></script>
-    <script src="sample-data.js?v=23"></script>
-    <script src="script.js?v=23"></script>
+    <!-- Scripts: defer = the page is painted first, scripts run in order once the HTML is parsed -->
+    <script defer src="vendor/icons.js?v=25"></script>
+    <script defer src="vendor/Sortable.min.js"></script>
+    <script defer src="config.js?v=25"></script>
+    <script defer src="storage.js?v=25"></script>
+    <script defer src="utils.js?v=25"></script>
+    <script defer src="ui.js?v=25"></script>
+    <script defer src="i18n.js?v=25"></script>
+    <script defer src="sample-data.js?v=25"></script>
+    <script defer src="script.js?v=25"></script>
     
     <!-- SEO Text (Visually Hidden) -->
     <div class="visually-hidden">

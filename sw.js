@@ -1,6 +1,6 @@
 // ProCVX - Service worker: lets the app work offline.
 // Only the app's own static files are cached; the user's CV data lives in localStorage, never here.
-const CACHE_NAME = 'procvx-v2';
+const CACHE_NAME = 'procvx-v3';
 
 const APP_SHELL = [
     './',
@@ -16,7 +16,7 @@ const APP_SHELL = [
     './manifest.webmanifest',
     './icons/icon-192.png',
     './icons/icon-512.png',
-    './vendor/lucide.min.js',
+    './vendor/icons.js',
     './vendor/Sortable.min.js',
     './fonts/fonts.css',
     './fonts/files/jetbrains-mono-latin-400-normal.woff2',

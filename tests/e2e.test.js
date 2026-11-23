@@ -35,14 +35,32 @@ async function openApp(t, { viewport = { width: 1440, height: 900 } } = {}) {
 
 // Local http server for tests that need a real origin (service worker, pretty URLs).
 // Behaves like the Cloudflare host: "/" and "/dir/" serve index.html, /index.html redirects to /.
+// Parses the Cloudflare _headers file: [{ path, headers: [[name, value]] }]
+function readHeadersFile() {
+    const rules = [];
+    for (const line of fs.readFileSync(path.join(__dirname, '..', '_headers'), 'utf8').split('\n')) {
+        if (!line.trim() || line.trim().startsWith('#')) continue;
+        if (!/^\s/.test(line)) rules.push({ path: line.trim(), headers: [] });
+        else {
+            const i = line.indexOf(':');
+            rules[rules.length - 1].headers.push([line.slice(0, i).trim(), line.slice(i + 1).trim()]);
+        }
+    }
+    return rules;
+}
+
 async function startServer(t) {
     const http = require('http');
     const root = path.join(__dirname, '..');
+    const headerRules = readHeadersFile();
+    const headersFor = urlPath => Object.fromEntries(headerRules
+        .filter(r => r.path === '/*' || r.path === urlPath)
+        .flatMap(r => r.headers));
     const types = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml',
         '.png': 'image/png', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
     const server = http.createServer((req, res) => {
         let file = decodeURIComponent(new URL(req.url, 'http://x').pathname);
-        // Behave like Cloudflare Pages: /index.html redirects to /
+        // Behave like Cloudflare: /index.html redirects to /
         if (file === '/index.html') {
             res.writeHead(308, { Location: '/' }).end();
             return;
@@ -53,7 +71,11 @@ async function startServer(t) {
             res.writeHead(404).end();
             return;
         }
-        res.writeHead(200, { 'Content-Type': types[path.extname(full)] || 'application/octet-stream' });
+        res.writeHead(200, {
+            'Content-Type': types[path.extname(full)] || 'application/octet-stream',
+            // Same headers Cloudflare sends (CSP included), so the http tests run under the real policy
+            ...headersFor(new URL(req.url, 'http://x').pathname)
+        });
         fs.createReadStream(full).pipe(res);
     });
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -235,6 +257,12 @@ test('JSON export → import round trip; invalid files show a toast, not an aler
     await page.setInputFiles('#input-json-file', bad);
     await page.locator('.toast-error').waitFor();
 
+    const huge = path.join(dir, 'huge.json');
+    fs.writeFileSync(huge, '{"fullname":"' + 'x'.repeat(6 * 1024 * 1024) + '"}');
+    await page.setInputFiles('#input-json-file', huge);
+    await page.locator('.toast-error', { hasText: /5 MB/ }).waitFor();
+    assert.equal(await page.inputValue('#input-fullname'), 'Alex Torto Ramos', 'oversized file ignored');
+
     const good = path.join(dir, 'good.json');
     fs.writeFileSync(good, JSON.stringify({
         ...exported,
@@ -252,8 +280,17 @@ test('JSON export → import round trip; invalid files show a toast, not an aler
     assert.equal((await storedState(page)).fullname, 'Importada Pérez');
 });
 
-test('legal dialogs open from the footer and close with their button', async t => {
-    const { page } = await openApp(t);
+test('legal dialogs open from the footer, fit on small screens and close with their button', async t => {
+    const { page } = await openApp(t, { viewport: { width: 390, height: 600 } });
+    for (const id of ['modal-aviso-legal', 'modal-privacidad', 'modal-storage']) {
+        await page.evaluate(modalId => document.querySelector(`[data-open-modal="${modalId}"]`).click(), id);
+        const close = page.locator(`[data-close-modal="${id}"]`);
+        const box = await close.boundingBox();
+        assert.ok(box.y >= 0 && box.y + box.height <= 600, `${id}: close button on screen (y=${box.y})`);
+        await close.click();
+        await modalIsClosed(page, id);
+    }
+    await page.setViewportSize({ width: 1440, height: 900 });
     await page.click('[data-open-modal="modal-privacidad"]');
     const box = page.locator('#modal-privacidad [role="dialog"]');
     await box.waitFor({ state: 'visible' });
@@ -407,7 +444,7 @@ test('offline: once visited over http, the app reloads and works without network
     await context.setOffline(true);
     await page.reload();
     await page.waitForFunction(() => document.getElementById('preview-title').textContent === 'Hecho sin conexión');
-    assert.ok(await page.evaluate(() => typeof lucide !== 'undefined' && typeof Sortable !== 'undefined'), 'vendor scripts served from cache');
+    assert.ok(await page.evaluate(() => typeof ProCVXIcons !== 'undefined' && typeof Sortable !== 'undefined'), 'vendor scripts served from cache');
     assert.equal(await page.locator('#cv-preview-sheet svg').first().isVisible(), true, 'icons rendered offline');
     const loadedFaces = await page.evaluate(async () =>
         (await document.fonts.load('600 16px Outfit')).filter(f => f.status === 'loaded').length);
@@ -528,4 +565,52 @@ test('sections can be reordered by drag and drop (handle or header), not above f
     await item('skills').locator('.drag-handle').dragTo(page.locator('.accordion-item[data-fixed]').first().locator('summary'), { targetPosition: { x: 40, y: 8 } });
     assert.equal((await order())[0], 'summary');
     assert.equal(await page.locator('.editor-accordion > .accordion-item').first().getAttribute('data-fixed'), 'true');
+});
+
+test('Content-Security-Policy from _headers: the whole app and the guides work without violations', async t => {
+    const url = await startServer(t);
+    const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, acceptDownloads: true });
+    t.after(() => context.close());
+    await context.addInitScript(() => {
+        window.__cspViolations = [];
+        document.addEventListener('securitypolicyviolation', e =>
+            window.__cspViolations.push(`${e.violatedDirective} ${e.blockedURI}`));
+    });
+    const page = await context.newPage();
+    const consoleErrors = [];
+    page.on('console', m => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    page.on('pageerror', e => consoleErrors.push(e.message));
+
+    const response = await page.goto(url);
+    assert.match(response.headers()['content-security-policy'], /script-src 'self'/);
+    await page.waitForFunction(() => document.getElementById('preview-fullname').textContent.includes('Alex'));
+    assert.ok(await page.locator('.accordion-trigger svg.lucide').count() > 5, 'icons rendered');
+
+    // Photo: blob: image + canvas data: URL
+    const photo = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'procvx-')), 'photo.png');
+    fs.copyFileSync(path.join(__dirname, '..', 'icons', 'icon-192.png'), photo);
+    await page.setInputFiles('#input-photo', photo);
+    await page.locator('#preview-photo').waitFor({ state: 'visible' });
+    assert.match(await page.locator('#preview-photo').getAttribute('src'), /^data:image\/jpeg/);
+
+    // Dropdowns, drag & drop (Sortable sets inline styles via CSSOM), dialogs, export, print
+    await page.click('#template-dropdown-header');
+    await page.click('[data-template="minimal"]');
+    const item = s => page.locator('.accordion-item', { has: page.locator(`[data-section="cv-section-${s}"]`) });
+    await item('volunteer').locator('.drag-handle').dragTo(item('projects').locator('summary'), { targetPosition: { x: 40, y: 8 } });
+    await page.click('[data-open-modal="modal-privacidad"]');
+    await page.click('[data-close-modal="modal-privacidad"]');
+    await Promise.all([page.waitForEvent('download'), page.click('#btn-export-json')]);
+    await page.evaluate(() => { window.print = () => window.dispatchEvent(new Event('afterprint')); });
+    await page.click('#btn-export-pdf');
+    await page.click('.mobile-view-btn[data-view="preview"]').catch(() => {});
+    await page.evaluate(() => navigator.serviceWorker.ready);
+
+    assert.deepEqual(await page.evaluate(() => window.__cspViolations), [], 'no CSP violations in the app');
+
+    // Guides (with JSON-LD blocks)
+    await page.goto(url + 'guias/cv-ats/');
+    await page.locator('h1').waitFor();
+    assert.deepEqual(await page.evaluate(() => window.__cspViolations), [], 'no CSP violations in the guides');
+    assert.deepEqual(consoleErrors, [], 'no console errors');
 });
