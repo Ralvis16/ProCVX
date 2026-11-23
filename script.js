@@ -1303,22 +1303,44 @@ document.addEventListener('DOMContentLoaded', () => {
     const previewSheet = $('cv-preview-sheet');
 
     // Scales the A4 sheet down (never up) so it fits the preview panel without horizontal scroll
+    const sheetFrame = $('cv-sheet-frame');
+
+    function resetPreviewScale() {
+        previewSheet.style.transform = '';
+        sheetFrame.style.width = '';
+        sheetFrame.style.height = '';
+        sheetFrame.classList.remove('is-scaled');
+    }
+
+    // Shrinks the A4 sheet with transform: scale() (never enlarges it). The frame takes the
+    // scaled size so there is no empty space or horizontal scroll. transform behaves the same
+    // in every browser; CSS zoom made Safari/iOS enlarge some text blocks.
     function fitPreview() {
-        if (!previewPanel || !previewSheet) return;
-        previewSheet.style.zoom = '';
+        if (!previewPanel || !previewSheet || !sheetFrame) return;
         const style = getComputedStyle(previewPanel);
         const available = previewPanel.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
-        const sheetWidth = previewSheet.offsetWidth;
-        if (available <= 0 || sheetWidth <= 0) return;
-        const scale = Math.min(1, available / sheetWidth);
-        if (scale < 1) previewSheet.style.zoom = scale.toFixed(4);
+        const width = previewSheet.offsetWidth;   // layout size, not affected by transform
+        const height = previewSheet.offsetHeight;
+        if (available <= 0 || width <= 0) return;
+        const scale = Math.min(1, available / width);
+        if (scale >= 1) {
+            resetPreviewScale();
+            return;
+        }
+        previewSheet.style.transform = `scale(${scale.toFixed(4)})`;
+        sheetFrame.style.width = `${Math.floor(width * scale)}px`;
+        sheetFrame.style.height = `${Math.ceil(height * scale)}px`;
+        sheetFrame.classList.add('is-scaled');
     }
 
     if (previewPanel && 'ResizeObserver' in window) {
-        new ResizeObserver(() => fitPreview()).observe(previewPanel);
+        // Panel resizes (rotation, view switch) and sheet height changes (typing) both refit
+        const observer = new ResizeObserver(() => fitPreview());
+        observer.observe(previewPanel);
+        observer.observe(previewSheet);
     }
     window.addEventListener('afterprint', fitPreview);
-    window.addEventListener('beforeprint', () => { if (previewSheet) previewSheet.style.zoom = ''; });
+    window.addEventListener('beforeprint', () => { if (previewSheet && sheetFrame) resetPreviewScale(); });
 
     const viewButtons = Array.from(document.querySelectorAll('.mobile-view-btn'));
     function setMobileView(view) {

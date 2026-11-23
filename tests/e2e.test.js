@@ -321,8 +321,23 @@ test('mobile: editor/preview switch and a scaled A4 preview without horizontal s
     await page.click('.mobile-view-btn[data-view="preview"]');
     assert.equal(await page.locator('.editor-panel').isVisible(), false);
     assert.equal(await page.locator('.preview-panel').isVisible(), true);
-    const zoom = Number(await page.locator('#cv-preview-sheet').evaluate(el => el.style.zoom));
-    assert.ok(zoom > 0.3 && zoom < 1, `sheet scaled (${zoom})`);
+    const scale = Number(await page.locator('#cv-preview-sheet').evaluate(el => (el.style.transform.match(/scale\(([\d.]+)\)/) || [])[1]));
+    assert.ok(scale > 0.3 && scale < 1, `sheet scaled with transform (${scale})`);
+    // The frame matches the scaled sheet, so the preview has no empty area or overflow
+    const frame = await page.locator('#cv-sheet-frame').boundingBox();
+    const sheet = await page.locator('#cv-preview-sheet').boundingBox();
+    assert.ok(Math.abs(frame.width - sheet.width) <= 1 && Math.abs(frame.height - sheet.height) <= 2,
+        `frame ${frame.width}x${frame.height} vs sheet ${sheet.width}x${sheet.height}`);
+    // Text is never auto-inflated by mobile browsers
+    assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).webkitTextSizeAdjust), '100%');
+    // Typing more content refits the frame height
+    const before = frame.height;
+    await page.evaluate(() => {
+        const summary = document.getElementById('input-summary');
+        summary.value = 'Texto largo de prueba. '.repeat(250); // longer than one A4 page
+        summary.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await page.waitForFunction(h => document.getElementById('cv-sheet-frame').getBoundingClientRect().height > h, before);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     assert.ok(overflow <= 0, `no horizontal scroll (${overflow}px)`);
 });
