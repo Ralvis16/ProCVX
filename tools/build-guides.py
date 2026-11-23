@@ -246,6 +246,8 @@ def page(*, title, description, path, body, breadcrumbs, depth, json_ld):
             <p>&copy; 2026 ProCVX · <a href="{up}">Creador de CV gratis</a> · <a href="{up}guias/">Guías</a></p>
         </div>
     </footer>
+    <!-- Cloudflare Web Analytics (cookieless). Its host is allowed in the CSP of _headers -->
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{{"token": "2322de99ae1841678ec6ea683b10c55a"}}'></script>
 </body>
 </html>
 '''

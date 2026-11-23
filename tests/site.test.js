@@ -102,3 +102,15 @@ test('vendor/icons.js contains exactly the icons used in the code (run tools/bui
     }
     assert.deepEqual([...window.ProCVXIcons.names].sort(), [...used].sort());
 });
+
+test('Cloudflare Web Analytics beacon is on every page and allowed by the CSP', () => {
+    const token = '2322de99ae1841678ec6ea683b10c55a';
+    for (const file of ['index.html', ...guidePages]) {
+        const html = read(file);
+        assert.equal((html.match(/static\.cloudflareinsights\.com\/beacon\.min\.js/g) || []).length, 1, `${file}: one beacon`);
+        assert.ok(html.includes(token), `${file}: token`);
+    }
+    const csp = read('_headers').match(/^\s+Content-Security-Policy: (.*)$/m)[1];
+    assert.match(csp, /script-src [^;]*https:\/\/static\.cloudflareinsights\.com/);
+    assert.match(csp, /connect-src [^;]*https:\/\/cloudflareinsights\.com/);
+});
