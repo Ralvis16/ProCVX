@@ -1,9 +1,9 @@
 // ProCVX - UI integration helpers
 (function (global) {
     function createIcons(root) {
-        if (typeof global.lucide === 'undefined' || !global.lucide.createIcons) return;
+        if (!global.ProCVXIcons) return;
         try {
-            global.lucide.createIcons(root ? { nameAttr: 'data-lucide', root } : undefined);
+            global.ProCVXIcons.createIcons(root ? { root } : undefined);
         } catch (error) {
             // Icon rendering is optional and must not block the editor.
         }
