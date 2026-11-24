@@ -139,3 +139,5 @@ npm test
 *   `tests/utils.test.js`: tests unitarios de las utilidades, traducciones y datos de ejemplo (solo Node).
 *   `tests/site.test.js`: comprueba las guías (título, descripción, `canonical`, datos estructurados y enlaces internos), el sitemap y el `robots.txt`.
 *   `tests/e2e.test.js`: abre la app en Chromium con Playwright y prueba edición, guardado, importar/exportar, idiomas, teclado, móvil, certificaciones y voluntariado, la exportación a PDF (comprueba que el ejemplo cabe en una página A4 en los dos idiomas) y el modo sin conexión (levanta un servidor local y recarga la app sin red). Necesita `pdfinfo`/`pdftotext` (poppler-utils) y un Chromium para Playwright (`npx playwright install chromium`).
+
+GitHub Actions (`.github/workflows/tests.yml`) ejecuta `npm test` completo, con Playwright y poppler, en cada pull request y en cada push a `main`.
