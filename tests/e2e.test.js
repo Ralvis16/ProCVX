@@ -496,9 +496,11 @@ test('guides: readable on mobile and lead back to the app', async t => {
     await page.goto(url);
     await page.click('a[href="guias/"]');
     await page.waitForURL(url + 'guias/');
-    assert.equal(await page.locator('.cards a').count(), 3);
+    const slugs = fs.readdirSync(path.join(__dirname, '..', 'guias'), { withFileTypes: true })
+        .filter(d => d.isDirectory()).map(d => d.name);
+    assert.equal(await page.locator('.cards a').count(), slugs.length);
 
-    for (const slug of ['cv-sin-experiencia', 'cv-ats', 'cv-fp']) {
+    for (const slug of slugs) {
         await page.goto(`${url}guias/${slug}/`);
         assert.equal(await page.locator('h1').count(), 1);
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
