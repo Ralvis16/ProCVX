@@ -45,7 +45,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 
 ## 🏗️ Arquitectura y Clean Code
 
-*   **Modularidad en JS:** `script.js` coordina la aplicación y delega persistencia, utilidades de texto e integración visual en módulos independientes.
+*   **Modularidad en JS (sin paso de build):** `script.js` coordina la aplicación y delega en módulos independientes: `forms.js` (formularios dinámicos), `render.js` (vista previa), `sections.js` (visibilidad y orden de secciones), además de persistencia, utilidades de texto e integración visual. Cada módulo es un script clásico que publica un objeto en `window` (`ProCVXForms`, `ProCVXRender`...), así que la app sigue funcionando también abriendo `index.html` como archivo.
 *   **Factory Pattern:** Los bloques dinámicos del editor (experiencias, idiomas, etc.) se crean con funciones de fábrica.
 *   **Seguridad:** Todo texto del usuario se escapa antes de insertarse en el HTML (también al importar un JSON, que además tiene un límite de 5 MB). Una **Content-Security-Policy** (en `_headers`) solo permite ejecutar código del propio sitio y de Cloudflare Web Analytics, y el HTML no contiene scripts ni estilos en línea.
 *   **Rendimiento:** solo se envían los iconos que se usan (`vendor/icons.js`, ~8 KB en lugar de ~460 KB) y los scripts se cargan con `defer`, para que la página se pinte antes.
@@ -87,7 +87,10 @@ Instala la extensión **Live Server** y pulsa **Go Live** en la barra inferior.
 ProCVX/
 ├── index.html          # Estructura (paneles de editor y vista previa)
 ├── style.css           # Estilos, temas, plantillas y reglas de impresión
-├── script.js           # Coordinación, renderizado, formularios dinámicos e i18n
+├── script.js           # Coordinación: i18n, estado, guardado, menús, diálogos, importar/exportar
+├── forms.js            # Formularios dinámicos del editor (experiencia, proyectos, idiomas...)
+├── render.js           # Vista previa del CV a partir del estado y barra de progreso
+├── sections.js         # Activar/desactivar secciones y reordenarlas (flechas y arrastrar)
 ├── storage.js          # Persistencia segura y análisis de JSON
 ├── utils.js            # Utilidades de texto, URLs seguras y debounce
 ├── ui.js               # Integración con Lucide y avisos (toasts)
@@ -137,5 +140,6 @@ npm test
 ```
 
 *   `tests/utils.test.js`: tests unitarios de las utilidades, traducciones y datos de ejemplo (solo Node).
+*   `tests/modules.test.js`: tests unitarios de las partes puras de `render.js` (HTML de cada bloque) y `sections.js` (completar un orden de secciones guardado) (solo Node).
 *   `tests/site.test.js`: comprueba las guías (título, descripción, `canonical`, datos estructurados y enlaces internos), el sitemap y el `robots.txt`.
 *   `tests/e2e.test.js`: abre la app en Chromium con Playwright y prueba edición, guardado, importar/exportar, idiomas, teclado, móvil, certificaciones y voluntariado, la exportación a PDF (comprueba que el ejemplo cabe en una página A4 en los dos idiomas) y el modo sin conexión (levanta un servidor local y recarga la app sin red). Necesita `pdfinfo`/`pdftotext` (poppler-utils) y un Chromium para Playwright (`npx playwright install chromium`).
