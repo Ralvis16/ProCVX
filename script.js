@@ -1,43 +1,21 @@
 // ----------------------------------------------------
-// ProCVX - JavaScript Logic for Live Preview and PDF Export
+// ProCVX - Application coordinator: wires the editor, the preview and persistence together.
+// Rendering lives in render.js, the dynamic forms in forms.js and section
+// visibility / ordering in sections.js.
 // ----------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
     const { defaultLanguage: DEFAULT_LANGUAGE, storageKeys: STORAGE_KEYS, donateUrl: DONATE_URL } = window.ProCVXConfig;
     const translations = window.ProCVXTranslations;
     const SAMPLE_DATA = window.ProCVXSampleData;
-    const {
-        escapeHtml, formatDescHtml, hasRealText, parseCommaSeparated,
-        normalizeLevel, levelLabelKeys: LEVEL_LABEL_KEYS, debounce, toSafeUrl
-    } = window.ProCVXUtils;
+    const { debounce } = window.ProCVXUtils;
     const { read: readStorage, write: writeStorage, remove: removeStorage, parseJson } = window.ProCVXStorage;
     const { createIcons, toast } = window.ProCVXUI;
+    const SECTION_TITLE_DEFAULTS = window.ProCVXRender.sectionTitleDefaults;
+    const DEFAULT_SECTION_ORDER = window.ProCVXSections.defaultOrder;
 
     const SAVE_DELAY_MS = 400;
     const MAX_IMPORT_BYTES = 5 * 1024 * 1024; // a CV with photo is well under 1 MB
-    const DEFAULT_SECTION_ORDER = [
-        'cv-section-summary',
-        'cv-section-experience',
-        'cv-section-projects',
-        'cv-section-volunteer',
-        'cv-section-education',
-        'cv-section-certifications',
-        'cv-section-softskills',
-        'cv-section-skills',
-        'cv-section-languages'
-    ];
-    // Section title inputs and the translation key of their default value
-    const SECTION_TITLE_DEFAULTS = {
-        profile: ['input-title-profile', 'def_profile'],
-        experience: ['input-title-experience', 'def_experience'],
-        projects: ['input-title-projects', 'def_projects'],
-        volunteer: ['input-title-volunteer', 'def_volunteer'],
-        education: ['input-title-education', 'def_education'],
-        certifications: ['input-title-certifications', 'def_certifications'],
-        skills: ['input-title-skills', 'def_skills'],
-        softskills: ['input-title-softskills', 'def_softskills'],
-        languages: ['input-title-languages', 'def_languages']
-    };
 
     // ----------------------------------------------------
     // DOM references
@@ -55,31 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputSummary = $('input-summary');
     const inputSoftSkillsDesc = $('input-softskills-desc');
 
-    const inputTitleProfile = $('input-title-profile');
-    const inputTitleExperience = $('input-title-experience');
-    const inputTitleProjects = $('input-title-projects');
-    const inputTitleEducation = $('input-title-education');
-    const inputTitleSkills = $('input-title-skills');
-    const inputTitleSoftSkills = $('input-title-softskills');
-    const inputTitleLanguages = $('input-title-languages');
-
     const inputPhoto = $('input-photo');
     const btnRemovePhoto = $('btn-remove-photo');
-    const previewPhoto = $('preview-photo');
     let currentPhoto = null;
-
-    const experienceList = $('experience-list');
-    const projectsList = $('projects-list');
-    const educationList = $('education-list');
-    const volunteerList = $('volunteer-list');
-    const certificationsList = $('certifications-list');
-    const skillsList = $('skills-list');
-    const languagesList = $('languages-list');
-    const dynamicLists = [experienceList, projectsList, educationList, volunteerList, certificationsList, skillsList, languagesList];
-
-    const previewSkillsDynamic = $('preview-skills-dynamic');
-    const previewSoftSkillsDesc = $('preview-softskills-desc');
-    const previewLanguagesList = $('preview-languages-list');
 
     const btnSampleData = $('btn-sample-data');
     const btnClearData = $('btn-clear-data');
@@ -156,237 +112,44 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ----------------------------------------------------
-    // Dynamic List Management
+    // Modules: dynamic forms, preview rendering, section visibility & order
     // ----------------------------------------------------
-    let expIdCounter = 0;
-    let projIdCounter = 0;
-    let eduIdCounter = 0;
-    let langIdCounter = 0;
-    let volIdCounter = 0;
-    let certIdCounter = 0;
-
-    function createDynamicItemContainer(id, innerHtml) {
-        return `
-            <div class="dynamic-item" id="${id}">
-                <div class="item-controls">
-                    <button type="button" class="btn-item-control btn-move-up" data-i18n-title="tt_up" data-i18n-aria="tt_up" title="Subir" aria-label="Subir"><i data-lucide="arrow-up"></i></button>
-                    <button type="button" class="btn-item-control btn-move-down" data-i18n-title="tt_down" data-i18n-aria="tt_down" title="Bajar" aria-label="Bajar"><i data-lucide="arrow-down"></i></button>
-                    <button type="button" class="btn-item-control btn-remove-item" data-i18n-title="tt_remove_item" data-i18n-aria="tt_remove_item" title="Eliminar" aria-label="Eliminar"><i data-lucide="x"></i></button>
-                </div>
-                ${innerHtml}
-            </div>
-        `;
-    }
-
-    // While > 0, adding items skips the per-item refresh (icons, translations, preview).
-    // runBulk() does a single refresh at the end instead of one per item.
-    let bulkDepth = 0;
-    function runBulk(fn) {
-        bulkDepth++;
-        try {
-            fn();
-        } finally {
-            bulkDepth--;
-        }
-        if (bulkDepth === 0) {
+    const forms = window.ProCVXForms.create({
+        onChange: () => updatePreview(),
+        // New items: render their icons and translate their labels (this also refreshes the preview)
+        onItemsAdded: () => {
             createIcons();
             updateLanguage(getCurrentLanguage());
         }
-    }
-
-    function appendDynamicField(listElement, id, innerHtml) {
-        if (!listElement) return;
-        listElement.insertAdjacentHTML('beforeend', createDynamicItemContainer(id, innerHtml));
-        setupItemListeners(id);
-        if (bulkDepth === 0) {
-            createIcons();
-            updateLanguage(getCurrentLanguage());
-        }
-    }
-
-    function clearDynamicLists() {
-        dynamicLists.forEach(list => { if (list) list.innerHTML = ''; });
-    }
-
-    function addExperienceField(data = {}) {
-        data = data || {};
-        const id = `exp-${expIdCounter++}`;
-        appendDynamicField(experienceList, id, `
-                <div class="form-group grid-2">
-                    <label for="${id}-role" data-i18n="lbl_exp_role">Puesto / Cargo</label>
-                    <input type="text" id="${id}-role" class="exp-role" data-i18n="ph_exp_role" value="${escapeHtml(data.role)}" placeholder="Ej. Desarrollador Web Prácticas">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-company" data-i18n="lbl_exp_company">Empresa</label>
-                    <input type="text" id="${id}-company" class="exp-company" data-i18n="ph_exp_company" value="${escapeHtml(data.company)}" placeholder="Ej. Innova Soft S.L.">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-dates" data-i18n="lbl_exp_dates">Periodo (Fechas)</label>
-                    <input type="text" id="${id}-dates" class="exp-dates" data-i18n="ph_exp_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. Ene 2025 - Mar 2026">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-desc" data-i18n="lbl_exp_desc">Descripción / Logros</label>
-                    <textarea id="${id}-desc" class="exp-desc bullet-textarea" data-i18n="ph_exp_desc" rows="3" placeholder="Ej. Desarrollo de APIs en Java, diseño de vistas responsivas...">${escapeHtml(data.desc)}</textarea>
-                </div>
-        `);
-    }
-
-    function addProjectField(data = {}) {
-        data = data || {};
-        const id = `proj-${projIdCounter++}`;
-        appendDynamicField(projectsList, id, `
-                <div class="form-group">
-                    <label for="${id}-title" data-i18n="lbl_proj_name">Nombre del Proyecto</label>
-                    <input type="text" id="${id}-title" class="proj-title" data-i18n="ph_proj_name" value="${escapeHtml(data.title)}" placeholder="Ej. E-commerce App">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-tech" data-i18n="lbl_proj_tech">Tecnologías (Separadas por comas)</label>
-                    <input type="text" id="${id}-tech" class="proj-tech" data-i18n="ph_proj_tech" value="${escapeHtml(data.tech)}" placeholder="Ej. Flutter, Firebase, Dart">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-desc" data-i18n="lbl_proj_desc">Descripción</label>
-                    <textarea id="${id}-desc" class="proj-desc" rows="2" data-i18n="ph_proj_desc" placeholder="Ej. Aplicación móvil de gestión logística con base de datos local y offline...">${escapeHtml(data.desc)}</textarea>
-                </div>
-        `);
-    }
-
-    function addEducationField(data = {}) {
-        data = data || {};
-        const id = `edu-${eduIdCounter++}`;
-        appendDynamicField(educationList, id, `
-                <div class="form-group">
-                    <label for="${id}-degree" data-i18n="lbl_edu_degree">Titulación / Grado / Certificación</label>
-                    <input type="text" id="${id}-degree" class="edu-degree" data-i18n="ph_edu_degree" value="${escapeHtml(data.degree)}" placeholder="Ej. C.F.G.S. Desarrollo de Aplicaciones Web">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-school" data-i18n="lbl_edu_school">Centro de Estudios / Institución</label>
-                    <input type="text" id="${id}-school" class="edu-school" data-i18n="ph_edu_school" value="${escapeHtml(data.school)}" placeholder="Ej. I.E.S. Tecnológico">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-dates" data-i18n="lbl_edu_dates">Periodo (Fechas)</label>
-                    <input type="text" id="${id}-dates" class="edu-dates" data-i18n="ph_edu_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2024 - 2026">
-                </div>
-        `);
-    }
-
-    function addVolunteerField(data = {}) {
-        data = data || {};
-        const id = `vol-${volIdCounter++}`;
-        appendDynamicField(volunteerList, id, `
-                <div class="form-group">
-                    <label for="${id}-role" data-i18n="lbl_vol_role">Rol / Actividad</label>
-                    <input type="text" id="${id}-role" class="vol-role" data-i18n="ph_vol_role" value="${escapeHtml(data.role)}" placeholder="Ej. Mentor de jóvenes">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-org" data-i18n="lbl_vol_org">Organización</label>
-                    <input type="text" id="${id}-org" class="vol-org" data-i18n="ph_vol_org" value="${escapeHtml(data.organization)}" placeholder="Ej. Cruz Roja">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-dates" data-i18n="lbl_vol_dates">Periodo (Fechas)</label>
-                    <input type="text" id="${id}-dates" class="vol-dates" data-i18n="ph_vol_dates" value="${escapeHtml(data.dates)}" placeholder="Ej. 2022 - Actualidad">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-desc" data-i18n="lbl_vol_desc">Descripción / Logros</label>
-                    <textarea id="${id}-desc" class="vol-desc bullet-textarea" rows="2" data-i18n="ph_vol_desc" placeholder="Ej. Talleres de orientación laboral para jóvenes...">${escapeHtml(data.desc)}</textarea>
-                </div>
-        `);
-    }
-
-    function addCertificationField(data = {}) {
-        data = data || {};
-        const id = `cert-${certIdCounter++}`;
-        appendDynamicField(certificationsList, id, `
-                <div class="form-group">
-                    <label for="${id}-name" data-i18n="lbl_cert_name">Certificación / Curso</label>
-                    <input type="text" id="${id}-name" class="cert-name" data-i18n="ph_cert_name" value="${escapeHtml(data.name)}" placeholder="Ej. AWS Certified Cloud Practitioner">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-issuer" data-i18n="lbl_cert_issuer">Entidad emisora</label>
-                    <input type="text" id="${id}-issuer" class="cert-issuer" data-i18n="ph_cert_issuer" value="${escapeHtml(data.issuer)}" placeholder="Ej. Amazon Web Services">
-                </div>
-                <div class="form-group">
-                    <label for="${id}-date" data-i18n="lbl_cert_date">Fecha</label>
-                    <input type="text" id="${id}-date" class="cert-date" data-i18n="ph_cert_date" value="${escapeHtml(data.date)}" placeholder="Ej. Mayo 2025">
-                </div>
-        `);
-    }
-
-    // The single comma-separated skills field
-    function setSkillsField(name = '') {
-        skillsList.innerHTML = `
-            <div class="form-group">
-                <label for="input-skills" data-i18n="lbl_skill_name">Habilidad / Tecnología (Separadas por comas)</label>
-                <input type="text" id="input-skills" class="skill-name" data-i18n="ph_skill_name" value="${escapeHtml(name)}" placeholder="Ej. Liderazgo, React, Excel">
-            </div>
-        `;
-        skillsList.querySelector('.skill-name').addEventListener('input', updatePreview);
-        if (bulkDepth === 0) updateLanguage(getCurrentLanguage());
-    }
-
-    function addLanguageField(name = '', level = 'Básico') {
-        level = normalizeLevel(level);
-        const id = `lang-${langIdCounter++}`;
-        const option = (value, key) =>
-            `<option value="${value}" data-i18n="${key}" ${level === value ? 'selected' : ''}>${value}</option>`;
-        appendDynamicField(languagesList, id, `
-                <div class="form-group grid-2">
-                    <div>
-                        <label for="${id}-name" data-i18n="lbl_lang_name">Idioma</label>
-                        <input type="text" id="${id}-name" class="lang-name" data-i18n="ph_lang_name" value="${escapeHtml(name)}" placeholder="Ej. Inglés">
-                    </div>
-                    <div>
-                        <label for="${id}-level" data-i18n="lbl_lang_level">Nivel</label>
-                        <select id="${id}-level" class="lang-level">
-                            ${Object.entries(LEVEL_LABEL_KEYS).map(([value, key]) => option(value, key)).join('')}
-                        </select>
-                    </div>
-                </div>
-        `);
-    }
-
-    function setupItemListeners(itemId) {
-        const item = $(itemId);
-        if (!item) return;
-
-        item.querySelectorAll('input, textarea, select').forEach(input => {
-            input.addEventListener('input', updatePreview);
-        });
-
-        item.querySelector('.btn-remove-item')?.addEventListener('click', () => {
-            item.classList.add('removing');
-            setTimeout(() => {
-                item.remove();
-                updatePreview();
-            }, 150);
-        });
-
-        item.querySelector('.btn-move-up')?.addEventListener('click', () => {
-            const prev = item.previousElementSibling;
-            if (prev) {
-                item.parentNode.insertBefore(item, prev);
-                updatePreview();
-            }
-        });
-
-        item.querySelector('.btn-move-down')?.addEventListener('click', () => {
-            const next = item.nextElementSibling;
-            if (next) {
-                item.parentNode.insertBefore(next, item);
-                updatePreview();
-            }
-        });
-    }
-
-    [
-        ['btn-add-experience', addExperienceField],
-        ['btn-add-project', addProjectField],
-        ['btn-add-education', addEducationField],
-        ['btn-add-language', addLanguageField],
-        ['btn-add-volunteer', addVolunteerField],
-        ['btn-add-certification', addCertificationField]
-    ].forEach(([buttonId, addField]) => {
-        $(buttonId)?.addEventListener('click', () => addField());
     });
+
+    const renderer = window.ProCVXRender.create({ getTranslations: () => getTranslations() });
+
+    const sections = window.ProCVXSections.create({
+        onToggle: () => {
+            renderer.renderCompleteness(collectState());
+            saveNow();
+        },
+        onReorder: () => saveNow()
+    });
+
+    function resetSectionOrderToDefault() {
+        sections.applyOrder(DEFAULT_SECTION_ORDER);
+        removeStorage(STORAGE_KEYS.sectionOrder);
+    }
+
+    function updatePreview() {
+        renderer.render(collectState());
+        forms.updateControlsState();
+        scheduleSave();
+    }
+
+    // Static fields, including every section title input
+    [
+        inputFullname, inputTitle, inputEmail, inputPhone, inputLink,
+        inputLinkedin, inputWebsite, inputLocation, inputSummary, inputSoftSkillsDesc,
+        ...Object.values(SECTION_TITLE_DEFAULTS).map(([inputId]) => $(inputId))
+    ].filter(Boolean).forEach(element => element.addEventListener('input', updatePreview));
 
     // ----------------------------------------------------
     // Photo Upload
@@ -451,312 +214,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updatePreview();
         saveNow();
     });
-
-    // ----------------------------------------------------
-    // Preview rendering
-    // ----------------------------------------------------
-    function updatePhotoPreview() {
-        if (currentPhoto) {
-            previewPhoto.src = currentPhoto;
-            previewPhoto.alt = inputFullname.value.trim();
-            previewPhoto.hidden = false;
-            if (btnRemovePhoto) btnRemovePhoto.hidden = false;
-        } else {
-            previewPhoto.removeAttribute('src');
-            previewPhoto.hidden = true;
-            if (btnRemovePhoto) btnRemovePhoto.hidden = true;
-            if (inputPhoto) inputPhoto.value = '';
-        }
-    }
-
-    function updateSectionTitlesPreview() {
-        const t = getTranslations();
-        Object.entries(SECTION_TITLE_DEFAULTS).forEach(([section, [inputId, key]]) => {
-            const span = document.querySelector(`#preview-title-${section}-header span`);
-            if (span) span.textContent = $(inputId).value || t[key];
-        });
-    }
-
-    function setText(id, value, fallback) {
-        $(id).textContent = value.trim() !== '' ? value : fallback;
-    }
-
-    function setContact(id, containerId, value, type = 'text') {
-        const container = $(containerId);
-        const trimmed = value.trim();
-        container.hidden = trimmed === '';
-        if (!trimmed) return;
-        const el = $(id);
-        el.textContent = trimmed;
-        if (el.tagName !== 'A') return;
-        if (type === 'email') {
-            el.href = 'mailto:' + trimmed;
-        } else if (type === 'phone') {
-            el.href = 'tel:' + trimmed.replace(/[^\d+]/g, '');
-        } else if (type === 'url') {
-            el.href = toSafeUrl(trimmed);
-        }
-    }
-
-    function updateTextAndContactPreview() {
-        const t = getTranslations();
-
-        // Long names break after the second word so the header stays balanced
-        let nameToDisplay = inputFullname.value.trim();
-        const nameWords = nameToDisplay.split(/\s+/);
-        if (nameWords.length > 2) {
-            nameToDisplay = nameWords[0] + ' ' + nameWords[1] + '\n' + nameWords.slice(2).join(' ');
-        }
-        setText('preview-fullname', nameToDisplay, t.lbl_fullname);
-        setText('preview-title', inputTitle.value, t.lbl_title);
-        setText('preview-summary', inputSummary.value, t.lbl_summary + '...');
-
-        setContact('preview-email', 'cv-contact-email-container', inputEmail.value, 'email');
-        setContact('preview-phone', 'cv-contact-phone-container', inputPhone.value, 'phone');
-        setContact('preview-location', 'cv-contact-location-container', inputLocation.value, 'text');
-        setContact('preview-website', 'cv-contact-website-container', inputWebsite.value, 'url');
-        setContact('preview-link', 'cv-contact-link-container', inputLink.value, 'url');
-        setContact('preview-linkedin', 'cv-contact-linkedin-container', inputLinkedin.value, 'url');
-    }
-
-    function buildExperienceHtml(role, company, dates, desc) {
-        const t = getTranslations();
-        return `
-            <div class="cv-item-block">
-                <div class="cv-item-header">
-                    <div class="cv-item-title">${role ? escapeHtml(role) : t.lbl_exp_role}</div>
-                    <div class="cv-item-meta">${company ? escapeHtml(company) : t.lbl_exp_company}</div>
-                </div>
-                <div class="cv-item-dates">${escapeHtml(dates)}</div>
-                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
-            </div>
-        `;
-    }
-
-    function buildProjectHtml(title, techString, desc) {
-        const techBadges = parseCommaSeparated(techString)
-            .map(tech => `<span class="cv-badge-tech">${escapeHtml(tech)}</span>`)
-            .join('');
-        return `
-            <div class="cv-item-block">
-                <div class="cv-item-header">
-                    <div class="cv-item-title">${escapeHtml(title)}</div>
-                </div>
-                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
-                ${techBadges ? `<div class="cv-item-tech">${techBadges}</div>` : ''}
-            </div>
-        `;
-    }
-
-    function buildEducationHtml(degree, school, dates) {
-        const t = getTranslations();
-        return `
-            <div class="cv-item-block">
-                <div class="cv-item-title">${degree ? escapeHtml(degree) : t.lbl_edu_degree}</div>
-                <div class="cv-item-meta">${school ? escapeHtml(school) : t.lbl_edu_school}</div>
-                <div class="cv-item-dates">${escapeHtml(dates)}</div>
-            </div>
-        `;
-    }
-
-    function buildVolunteerHtml(role, organization, dates, desc) {
-        return `
-            <div class="cv-item-block">
-                <div class="cv-item-header">
-                    <div class="cv-item-title">${escapeHtml(role)}</div>
-                    <div class="cv-item-meta">${escapeHtml(organization)}</div>
-                </div>
-                ${dates.trim() ? `<div class="cv-item-dates">${escapeHtml(dates)}</div>` : ''}
-                ${hasRealText(desc) ? `<div class="cv-item-desc">${formatDescHtml(desc)}</div>` : ''}
-            </div>
-        `;
-    }
-
-    function buildCertificationHtml(name, issuer, date) {
-        return `
-            <div class="cv-item-block">
-                <div class="cv-item-title">${escapeHtml(name)}</div>
-                ${issuer.trim() ? `<div class="cv-item-meta">${escapeHtml(issuer)}</div>` : ''}
-                ${date.trim() ? `<div class="cv-item-dates">${escapeHtml(date)}</div>` : ''}
-            </div>
-        `;
-    }
-
-    // Renders one dynamic list into its preview container; hides the section when the list is empty.
-    function renderListPreview(list, sectionId, containerId, readItem, buildHtml) {
-        const items = list.querySelectorAll('.dynamic-item');
-        const section = $(sectionId);
-        if (items.length === 0) {
-            section.style.display = 'none';
-            $(containerId).innerHTML = '';
-            return;
-        }
-        section.style.display = 'flex';
-        $(containerId).innerHTML = Array.from(items)
-            .map(readItem)
-            .filter(Boolean)
-            .map(values => buildHtml(...values))
-            .join('');
-    }
-
-    const val = (item, selector) => item.querySelector(selector).value;
-
-    function updateExperiencePreview() {
-        renderListPreview(experienceList, 'cv-section-experience', 'preview-experience', item => {
-            const values = [val(item, '.exp-role'), val(item, '.exp-company'), val(item, '.exp-dates'), val(item, '.exp-desc')];
-            return values[0] || values[1] ? values : null;
-        }, buildExperienceHtml);
-    }
-
-    function updateProjectsPreview() {
-        renderListPreview(projectsList, 'cv-section-projects', 'preview-projects', item => {
-            const values = [val(item, '.proj-title'), val(item, '.proj-tech'), val(item, '.proj-desc')];
-            return values[0] ? values : null;
-        }, buildProjectHtml);
-    }
-
-    function updateEducationPreview() {
-        renderListPreview(educationList, 'cv-section-education', 'preview-education', item => {
-            const values = [val(item, '.edu-degree'), val(item, '.edu-school'), val(item, '.edu-dates')];
-            return values[0] || values[1] ? values : null;
-        }, buildEducationHtml);
-    }
-
-    function updateVolunteerPreview() {
-        renderListPreview(volunteerList, 'cv-section-volunteer', 'preview-volunteer', item => {
-            const values = [val(item, '.vol-role'), val(item, '.vol-org'), val(item, '.vol-dates'), val(item, '.vol-desc')];
-            return values[0] || values[1] ? values : null;
-        }, buildVolunteerHtml);
-    }
-
-    function updateCertificationsPreview() {
-        renderListPreview(certificationsList, 'cv-section-certifications', 'preview-certifications', item => {
-            const values = [val(item, '.cert-name'), val(item, '.cert-issuer'), val(item, '.cert-date')];
-            return values[0] ? values : null;
-        }, buildCertificationHtml);
-    }
-
-    function getSkillNames() {
-        const skillsInput = skillsList.querySelector('.skill-name');
-        return skillsInput ? parseCommaSeparated(skillsInput.value) : [];
-    }
-
-    function updateSkillsPreview() {
-        const skillNames = getSkillNames();
-        const skillsSection = $('cv-section-skills');
-        if (skillNames.length === 0) {
-            skillsSection.style.display = 'none';
-            return;
-        }
-        skillsSection.style.display = 'flex';
-        previewSkillsDynamic.innerHTML = `<div class="cv-tags">${
-            skillNames.map(name => `<span class="cv-tag">${escapeHtml(name)}</span>`).join('')
-        }</div>`;
-    }
-
-    function updateSoftSkillsPreview() {
-        const text = inputSoftSkillsDesc.value;
-        const softSkillsSection = $('cv-section-softskills');
-        if (!hasRealText(text)) {
-            softSkillsSection.style.display = 'none';
-            return;
-        }
-        softSkillsSection.style.display = 'flex';
-        previewSoftSkillsDesc.innerHTML = formatDescHtml(text);
-    }
-
-    function updateLanguagesPreview() {
-        const t = getTranslations();
-        const langItems = languagesList.querySelectorAll('.dynamic-item');
-        previewLanguagesList.innerHTML = '';
-        langItems.forEach(item => {
-            const name = val(item, '.lang-name').trim();
-            if (!name) return;
-            const level = val(item, '.lang-level').trim();
-            const langDiv = document.createElement('div');
-            langDiv.className = 'cv-language-row';
-            const strong = document.createElement('strong');
-            strong.textContent = name + ':';
-            langDiv.append(strong, ' ' + (t[LEVEL_LABEL_KEYS[level]] || level));
-            previewLanguagesList.appendChild(langDiv);
-        });
-        $('cv-section-languages').style.display = langItems.length === 0 ? 'none' : 'block';
-    }
-
-    function updateDynamicControlsState() {
-        document.querySelectorAll('.dynamic-list').forEach(list => {
-            const items = list.querySelectorAll('.dynamic-item');
-            items.forEach((item, index) => {
-                const upBtn = item.querySelector('.btn-move-up');
-                const downBtn = item.querySelector('.btn-move-down');
-                if (upBtn) upBtn.disabled = index === 0;
-                if (downBtn) downBtn.disabled = index === items.length - 1;
-            });
-        });
-    }
-
-    function isSectionEnabled(sectionId) {
-        const toggle = document.querySelector(`.section-toggle[data-section="${sectionId}"]`);
-        return !toggle || toggle.checked;
-    }
-
-    // Progress bar telling the user which essential fields are still missing
-    function updateCompleteness() {
-        const bar = $('completeness-bar');
-        if (!bar) return;
-        const t = getTranslations();
-        const anyItem = (list, selectors) => Array.from(list.querySelectorAll('.dynamic-item'))
-            .some(item => selectors.some(sel => val(item, sel).trim()));
-
-        const checks = [
-            ['chk_name', inputFullname.value.trim()],
-            ['chk_title', inputTitle.value.trim()],
-            ['chk_email', inputEmail.value.trim()],
-            ['chk_phone', inputPhone.value.trim()]
-        ];
-        if (isSectionEnabled('cv-section-summary')) checks.push(['chk_summary', inputSummary.value.trim()]);
-        if (isSectionEnabled('cv-section-experience')) checks.push(['chk_experience', anyItem(experienceList, ['.exp-role', '.exp-company'])]);
-        if (isSectionEnabled('cv-section-education')) checks.push(['chk_education', anyItem(educationList, ['.edu-degree', '.edu-school'])]);
-        if (isSectionEnabled('cv-section-skills') || isSectionEnabled('cv-section-softskills')) {
-            checks.push(['chk_skills', getSkillNames().length > 0 || hasRealText(inputSoftSkillsDesc.value)]);
-        }
-        if (isSectionEnabled('cv-section-languages')) checks.push(['chk_languages', anyItem(languagesList, ['.lang-name'])]);
-
-        const missing = checks.filter(([, ok]) => !ok).map(([key]) => t[key]);
-        const pct = Math.round(((checks.length - missing.length) / checks.length) * 100);
-
-        bar.setAttribute('aria-valuenow', String(pct));
-        $('completeness-fill').style.width = pct + '%';
-        $('cv-completeness').classList.toggle('is-complete', missing.length === 0);
-        const label = t.completeness_label.replace('{pct}', pct);
-        $('completeness-text').textContent = missing.length === 0
-            ? `${label} · ${t.completeness_done}`
-            : `${label} · ${t.completeness_missing.replace('{items}', missing.join(', '))}`;
-    }
-
-    function updatePreview() {
-        updatePhotoPreview();
-        updateSectionTitlesPreview();
-        updateTextAndContactPreview();
-        updateExperiencePreview();
-        updateProjectsPreview();
-        updateEducationPreview();
-        updateVolunteerPreview();
-        updateCertificationsPreview();
-        updateSkillsPreview();
-        updateSoftSkillsPreview();
-        updateLanguagesPreview();
-        updateDynamicControlsState();
-        updateCompleteness();
-        scheduleSave();
-    }
-
-    [
-        inputFullname, inputTitle, inputEmail, inputPhone, inputLink,
-        inputLinkedin, inputWebsite, inputLocation, inputSummary,
-        inputTitleProfile, inputTitleExperience, inputTitleProjects, inputTitleEducation,
-        inputTitleSkills, inputTitleSoftSkills, inputSoftSkillsDesc, inputTitleLanguages
-    ].filter(Boolean).forEach(element => element.addEventListener('input', updatePreview));
 
     // ----------------------------------------------------
     // Dropdowns (Theme, Template, Language) - mouse + keyboard
@@ -911,127 +368,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }));
 
     // ----------------------------------------------------
-    // Section visibility & ordering
-    // ----------------------------------------------------
-    const sectionToggles = Array.from(document.querySelectorAll('.section-toggle'));
-
-    function setSectionEnabled(toggle, enabled) {
-        toggle.checked = enabled;
-        const targetSection = $(toggle.getAttribute('data-section'));
-        const accordionItem = toggle.closest('.accordion-item');
-        targetSection?.classList.toggle('hidden-section', !enabled);
-        accordionItem?.classList.toggle('section-disabled', !enabled);
-    }
-
-    sectionToggles.forEach(toggle => {
-        toggle.addEventListener('change', () => {
-            setSectionEnabled(toggle, toggle.checked);
-            updateCompleteness();
-            saveNow();
-        });
-    });
-
-    function getSectionOrder() {
-        // querySelectorAll returns document order, i.e. the current editor order
-        return Array.from(document.querySelectorAll('.section-toggle'))
-            .map(toggle => toggle.getAttribute('data-section'))
-            .filter(Boolean);
-    }
-
-    function updatePreviewSectionOrder() {
-        const orderedIds = getSectionOrder();
-        document.querySelectorAll('#cv-preview-sheet .cv-section').forEach(sec => {
-            const idx = orderedIds.indexOf(sec.id);
-            sec.style.order = idx !== -1 ? idx : 99;
-        });
-    }
-
-    function applySectionOrder(order) {
-        if (!Array.isArray(order)) return;
-        // Orders saved before a section existed don't list it: insert it after its default predecessor
-        const fullOrder = order.map(String).filter(id => DEFAULT_SECTION_ORDER.includes(id));
-        DEFAULT_SECTION_ORDER.forEach((sectionId, index) => {
-            if (fullOrder.includes(sectionId)) return;
-            const prevIndex = fullOrder.indexOf(DEFAULT_SECTION_ORDER[index - 1]);
-            fullOrder.splice(prevIndex + 1, 0, sectionId);
-        });
-        fullOrder.forEach(sectionId => {
-            const toggle = document.querySelector(`.section-toggle[data-section="${CSS.escape(String(sectionId))}"]`);
-            const item = toggle?.closest('.accordion-item');
-            if (item?.parentNode) item.parentNode.appendChild(item);
-        });
-        updatePreviewSectionOrder();
-    }
-
-    function resetSectionOrderToDefault() {
-        applySectionOrder(DEFAULT_SECTION_ORDER);
-        removeStorage(STORAGE_KEYS.sectionOrder);
-    }
-
-    function moveSection(btn, direction) {
-        const item = btn.closest('.accordion-item');
-        if (!item) return;
-        const prev = item.previousElementSibling;
-        const next = item.nextElementSibling;
-        if (direction === 'up' && prev?.classList.contains('accordion-item') && !prev.hasAttribute('data-fixed')) {
-            item.parentNode.insertBefore(item, prev);
-        } else if (direction === 'down' && next?.classList.contains('accordion-item')) {
-            item.parentNode.insertBefore(next, item);
-        }
-        updatePreviewSectionOrder();
-        saveNow();
-        btn.focus();
-    }
-
-    document.querySelectorAll('.btn-section-up, .btn-section-down').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            moveSection(btn, btn.classList.contains('btn-section-up') ? 'up' : 'down');
-        });
-    });
-
-    // Drag and drop reordering (SortableJS)
-    const accordionContainer = document.querySelector('.editor-accordion');
-    if (typeof Sortable !== 'undefined' && accordionContainer) {
-        new Sortable(accordionContainer, {
-            animation: 150,
-            handle: '.accordion-trigger, .drag-handle',
-            filter: '[data-fixed="true"] .accordion-trigger, input, textarea, select, button, .section-toggle',
-            preventOnFilter: false,
-            onMove: evt => !evt.related.hasAttribute('data-fixed'),
-            onEnd: evt => {
-                // Prevent the accordion from toggling right after a drag
-                const trigger = evt.item.querySelector('.accordion-trigger');
-                if (trigger) {
-                    const preventClick = e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        trigger.removeEventListener('click', preventClick, true);
-                    };
-                    trigger.addEventListener('click', preventClick, true);
-                    setTimeout(() => trigger.removeEventListener('click', preventClick, true), 100);
-                }
-                updatePreviewSectionOrder();
-                saveNow();
-            }
-        });
-        document.querySelectorAll('.accordion-item:not([data-fixed="true"]) .accordion-trigger')
-            .forEach(trigger => trigger.classList.add('is-draggable'));
-    }
-
-    // ----------------------------------------------------
     // State: collect / apply / persist
     // ----------------------------------------------------
     function collectState() {
-        const items = (list, mapper) => Array.from(list.querySelectorAll('.dynamic-item')).map(mapper);
         const titles = {};
         Object.entries(SECTION_TITLE_DEFAULTS).forEach(([section, [inputId]]) => {
             titles[section] = $(inputId).value;
         });
-        const toggles = {};
-        sectionToggles.forEach(toggle => { toggles[toggle.getAttribute('data-section')] = toggle.checked; });
+        const lists = forms.collect();
 
+        // Key order matches the exported JSON of earlier versions
         return {
             fullname: inputFullname.value,
             title: inputTitle.value,
@@ -1042,31 +388,17 @@ document.addEventListener('DOMContentLoaded', () => {
             link: inputLink.value,
             linkedin: inputLinkedin.value,
             summary: inputSummary.value,
-            skills: [{ name: skillsList.querySelector('.skill-name')?.value || '' }],
+            skills: lists.skills,
             titles,
             softskillsDesc: inputSoftSkillsDesc.value,
             photo: currentPhoto,
-            experience: items(experienceList, item => ({
-                role: val(item, '.exp-role'), company: val(item, '.exp-company'),
-                dates: val(item, '.exp-dates'), desc: val(item, '.exp-desc')
-            })),
-            projects: items(projectsList, item => ({
-                title: val(item, '.proj-title'), tech: val(item, '.proj-tech'), desc: val(item, '.proj-desc')
-            })),
-            education: items(educationList, item => ({
-                degree: val(item, '.edu-degree'), school: val(item, '.edu-school'), dates: val(item, '.edu-dates')
-            })),
-            volunteer: items(volunteerList, item => ({
-                role: val(item, '.vol-role'), organization: val(item, '.vol-org'),
-                dates: val(item, '.vol-dates'), desc: val(item, '.vol-desc')
-            })),
-            certifications: items(certificationsList, item => ({
-                name: val(item, '.cert-name'), issuer: val(item, '.cert-issuer'), date: val(item, '.cert-date')
-            })),
-            languages: items(languagesList, item => ({
-                name: val(item, '.lang-name'), level: val(item, '.lang-level')
-            })),
-            toggles
+            experience: lists.experience,
+            projects: lists.projects,
+            education: lists.education,
+            volunteer: lists.volunteer,
+            certifications: lists.certifications,
+            languages: lists.languages,
+            toggles: sections.getToggleStates()
         };
     }
 
@@ -1096,21 +428,17 @@ document.addEventListener('DOMContentLoaded', () => {
         // Only accept embedded images as photo
         currentPhoto = typeof state.photo === 'string' && /^data:image\//.test(state.photo) ? state.photo : null;
 
-        const toggles = state.toggles && typeof state.toggles === 'object' ? state.toggles : {};
-        sectionToggles.forEach(toggle => {
-            const saved = toggles[toggle.getAttribute('data-section')];
-            setSectionEnabled(toggle, saved === undefined ? true : Boolean(saved));
-        });
+        sections.applyToggleStates(state.toggles && typeof state.toggles === 'object' ? state.toggles : {});
 
-        clearDynamicLists();
-        runBulk(() => {
-            setSkillsField(validItems(state.skills).map(sk => str(sk.name)).filter(Boolean).join(', '));
-            validItems(state.languages).forEach(lg => addLanguageField(str(lg.name), str(lg.level) || 'Básico'));
-            validItems(state.experience).forEach(exp => addExperienceField(exp));
-            validItems(state.projects).forEach(proj => addProjectField(proj));
-            validItems(state.education).forEach(edu => addEducationField(edu));
-            validItems(state.volunteer).forEach(vol => addVolunteerField(vol));
-            validItems(state.certifications).forEach(cert => addCertificationField(cert));
+        forms.clear();
+        forms.runBulk(() => {
+            forms.setSkills(validItems(state.skills).map(sk => str(sk.name)).filter(Boolean).join(', '));
+            validItems(state.languages).forEach(lg => forms.addLanguage(str(lg.name), str(lg.level) || 'Básico'));
+            validItems(state.experience).forEach(exp => forms.addExperience(exp));
+            validItems(state.projects).forEach(proj => forms.addProject(proj));
+            validItems(state.education).forEach(edu => forms.addEducation(edu));
+            validItems(state.volunteer).forEach(vol => forms.addVolunteer(vol));
+            validItems(state.certifications).forEach(cert => forms.addCertification(cert));
         });
     }
 
@@ -1118,7 +446,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function saveNow() {
         scheduleSave.cancel();
         const ok = writeStorage(STORAGE_KEYS.state, JSON.stringify(collectState()));
-        writeStorage(STORAGE_KEYS.sectionOrder, JSON.stringify(getSectionOrder()));
+        writeStorage(STORAGE_KEYS.sectionOrder, JSON.stringify(sections.getOrder()));
+
         const theme = themeContainer.querySelector('.dropdown-item.active')?.getAttribute('data-theme');
         const template = templateContainer.querySelector('.dropdown-item.active')?.getAttribute('data-template');
         if (theme) writeStorage(STORAGE_KEYS.theme, theme);
@@ -1408,8 +737,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setMobileView('editor');
 
         const order = parseJson(stored.order, null);
-        if (Array.isArray(order)) applySectionOrder(order);
-        else updatePreviewSectionOrder();
+        if (Array.isArray(order)) sections.applyOrder(order);
+        else sections.updatePreviewOrder();
+
 
         const state = parseJson(stored.state, null);
         if (state && typeof state === 'object' && !Array.isArray(state)) {
