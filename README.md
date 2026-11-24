@@ -27,7 +27,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 *   **Datos de Ejemplo:** En la primera visita se cargan datos de ejemplo coherentes (en el idioma elegido) que caben en una página; el botón **Ejemplo** permite recargarlos. Tras **Limpiar**, el CV queda vacío aunque recargues la página.
 *   **Certificaciones y Voluntariado:** Secciones propias para certificaciones o cursos (nombre, entidad y fecha, en la columna lateral) y para voluntariado (rol, organización, fechas y logros con viñetas, en la columna principal). Si ya tenías un orden de secciones guardado, las nuevas se colocan en su sitio natural.
 *   **Funciona sin Conexión (PWA):** Tras la primera visita desde la web publicada, un *service worker* guarda los archivos de la aplicación, así que se puede abrir y usar sin internet. También se puede instalar como app desde el navegador. La copia en caché no contiene datos del usuario.
-*   **Guías para hacer un CV:** páginas en `guias/` (CV sin experiencia, CV compatible con ATS, CV para FP, CV para hostelería, perfil profesional y carta de presentación) pensadas para atraer visitas desde Google, y su versión en inglés en `en/guides/` (todas menos la de FP) enlazada con `hreflang`. Se generan con `tools/build-guides.py` (contenido en inglés en `tools/guides_en.py`), con `sitemap.xml` y `robots.txt`.
+*   **Guías para hacer un CV:** páginas en `guias/` (CV sin experiencia, CV compatible con ATS, CV para FP, CV para hostelería, perfil profesional y carta de presentación) pensadas para atraer visitas desde Google, y su versión en inglés en `en/guides/` (todas menos la de FP) enlazada con `hreflang`. Se generan con `tools/build-guides.py` (contenido en `tools/guides_es.py` y `tools/guides_en.py`), con `sitemap.xml` y `robots.txt`.
 *   **Donaciones opcionales:** un enlace discreto en el pie y una sugerencia tras exportar el PDF (una vez por sesión). Solo aparecen si hay un enlace configurado.
 *   **Privacidad Real:** Todo se procesa en tu navegador y los datos del CV nunca salen del dispositivo. Librerías, iconos y tipografías se alojan en el propio proyecto. Las visitas se miden con Cloudflare Web Analytics (sin cookies), con el script incluido en `index.html` y en las guías (instalación manual: la automática no funciona con Workers ni para visitantes de la UE).
 
@@ -126,7 +126,7 @@ ProCVX/
 
 ## 💡 Guías y donaciones
 
-*   **Editar o añadir guías:** el contenido está en la lista `GUIDES` de `tools/build-guides.py`. Después ejecuta `python3 tools/build-guides.py`, que regenera las páginas de `guias/` y el `sitemap.xml`.
+*   **Editar o añadir guías:** el contenido en español está en `tools/guides_es.py` y el inglés en `tools/guides_en.py`. Después ejecuta `python3 tools/build-guides.py`, que regenera `guias/`, `en/guides/` y el `sitemap.xml`.
 *   **Activar el botón de donación:** pon tu enlace (Ko-fi, Buy Me a Coffee…) en `donateUrl` dentro de `config.js`. Debe empezar por `https://`.
 *   Tras publicar, envía `https://procvx.com/sitemap.xml` en Google Search Console para que Google descubra las guías antes.
 
