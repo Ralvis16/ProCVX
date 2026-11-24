@@ -48,7 +48,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // i18n
     // ----------------------------------------------------
     // Read once from storage; afterwards kept in memory (tr() runs many times per keystroke)
+    // A "?lang=en" link (used by the English guides) picks the language and remembers it
     let currentLanguage = (() => {
+        let urlLanguage = null;
+        try { urlLanguage = new URLSearchParams(window.location.search).get('lang'); } catch (e) { /* ignore */ }
+        if (urlLanguage && translations[urlLanguage]) {
+            writeStorage(STORAGE_KEYS.language, urlLanguage);
+            return urlLanguage;
+        }
         const savedLanguage = readStorage(STORAGE_KEYS.language);
         return savedLanguage && translations[savedLanguage] ? savedLanguage : DEFAULT_LANGUAGE;
     })();
@@ -79,6 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 el.textContent = t[key];
             }
+        });
+        document.querySelectorAll('[data-i18n-href]').forEach(el => {
+            const href = t[el.getAttribute('data-i18n-href')];
+            if (href) el.setAttribute('href', href);
         });
         document.querySelectorAll('[data-i18n-html]').forEach(el => {
             const key = el.getAttribute('data-i18n-html');

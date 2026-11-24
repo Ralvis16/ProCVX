@@ -513,6 +513,30 @@ test('guides: readable on mobile and lead back to the app', async t => {
     assert.deepEqual(errors, []);
 });
 
+test('English guides lead to the app in English', async t => {
+    const url = await startServer(t);
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    t.after(() => context.close());
+    const page = await context.newPage();
+
+    const slugs = fs.readdirSync(path.join(__dirname, '..', 'en', 'guides'), { withFileTypes: true })
+        .filter(d => d.isDirectory()).map(d => d.name);
+    for (const slug of slugs) {
+        await page.goto(`${url}en/guides/${slug}/`);
+        assert.equal(await page.locator('html').getAttribute('lang'), 'en');
+        const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+        assert.ok(overflow <= 0, `${slug}: no horizontal scroll (${overflow}px)`);
+    }
+
+    await page.click('.cta a');
+    await page.waitForURL(url + '?lang=en');
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    assert.equal(await page.getAttribute('a[data-i18n="footer_guides"]', 'href'), 'en/guides/');
+    // The choice is remembered without the query
+    await page.goto(url);
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+});
+
 test('donate link: hidden without a URL; with one, shown in the footer and suggested once after the PDF', async t => {
     const url = await startServer(t);
     const realConfig = fs.readFileSync(path.join(__dirname, '..', 'config.js'), 'utf8');
