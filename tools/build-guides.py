@@ -10,7 +10,15 @@ from pathlib import Path
 
 SITE = 'https://procvx.com/'
 ROOT = Path(__file__).resolve().parent.parent
-PUBLISHED = '2026-11-22'
+PUBLISHED = '2026-11-22'  # default date; a guide can set its own 'published'
+MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto',
+          'septiembre', 'octubre', 'noviembre', 'diciembre']
+
+
+def human_date(iso):
+    y, m, d = (int(x) for x in iso.split('-'))
+    return f'{d} de {MONTHS[m - 1]} de {y}'
+
 
 GUIDES = [
     {
@@ -197,6 +205,243 @@ GUIDES = [
 <div class="tip"><p><strong>Consejo:</strong> en ProCVX puedes reordenar estas secciones arrastrándolas y ocultar las que no uses, sin perder lo que has escrito.</p></div>
 ''',
     },
+    {
+        'slug': 'carta-de-presentacion',
+        'published': '2026-11-24',
+        'title': 'Cómo hacer una carta de presentación (con ejemplo)',
+        'short': 'Carta de presentación',
+        'description': 'Cómo escribir una carta de presentación que se lea: estructura en cuatro párrafos, qué poner en cada uno, un ejemplo completo y los errores que hay que evitar.',
+        'lead': 'Una carta de presentación no repite tu CV: explica por qué encajas en <em>ese</em> puesto y en <em>esa</em> empresa. Bien hecha, son cinco minutos de lectura que te diferencian de quien solo adjunta el currículum.',
+        'body': '''
+<nav class="toc" aria-label="Contenido">
+  <strong>En esta guía</strong>
+  <ol>
+    <li><a href="#cuando">Cuándo enviarla</a></li>
+    <li><a href="#estructura">La estructura en cuatro párrafos</a></li>
+    <li><a href="#ejemplo">Ejemplo completo</a></li>
+    <li><a href="#correo">Si la envías por correo</a></li>
+    <li><a href="#errores">Errores frecuentes</a></li>
+  </ol>
+</nav>
+
+<h2 id="cuando">1. Cuándo enviarla</h2>
+<p>Envíala siempre que la oferta la pida y, además, en estos casos:</p>
+<ul>
+  <li><strong>Autocandidaturas:</strong> escribes a una empresa que no ha publicado ninguna oferta. Sin carta, nadie sabe qué puesto buscas.</li>
+  <li><strong>Cambio de sector</strong> o un hueco en tu trayectoria que conviene explicar en una frase.</li>
+  <li><strong>Ofertas con pocos candidatos</strong> o en empresas pequeñas, donde quien selecciona suele leerlo todo.</li>
+</ul>
+<p>En portales de empleo con un campo de “carta” opcional, unas pocas líneas personalizadas valen más que dejarlo vacío o pegar un texto genérico.</p>
+
+<h2 id="estructura">2. La estructura en cuatro párrafos</h2>
+<p>No hace falta más de una página; lo ideal son entre 200 y 300 palabras.</p>
+<ol>
+  <li><strong>Saludo y motivo.</strong> Dirígete a una persona si conoces su nombre. Di a qué puesto te presentas y dónde viste la oferta.</li>
+  <li><strong>Por qué encajas.</strong> Elige dos o tres requisitos de la oferta y demuestra que los cumples con un dato o un logro concreto.</li>
+  <li><strong>Por qué esa empresa.</strong> Una o dos frases que prueben que la conoces: un producto, un proyecto, su forma de trabajar.</li>
+  <li><strong>Cierre.</strong> Disponibilidad, invitación a una entrevista y despedida.</li>
+</ol>
+<div class="compare">
+  <div class="bad"><span class="label">Genérico</span>Me pongo en contacto con ustedes para ofrecerles mis servicios, ya que soy una persona trabajadora y con ganas de aprender.</div>
+  <div class="good"><span class="label">Concreto</span>Le escribo por la oferta de Auxiliar Administrativo publicada en InfoJobs. Durante mis prácticas en una gestoría tramité más de 200 facturas al mes con A3, uno de los requisitos que piden.</div>
+</div>
+
+<h2 id="ejemplo">3. Ejemplo completo</h2>
+<div class="example">
+  <p>Estimada Sra. García:</p>
+  <p>Le escribo para presentar mi candidatura al puesto de Dependienta en su tienda de Valencia, publicado en su web la semana pasada.</p>
+  <p>Durante los dos últimos veranos he trabajado como dependienta en una tienda de deportes con más de 300 clientes al día, donde me encargaba de la caja, la reposición y los cambios y devoluciones. En temporada alta propuse reorganizar el probador con un sistema de turnos que redujo las colas en hora punta. Hablo inglés con fluidez (B2), algo útil en una zona con tanto turismo.</p>
+  <p>Conozco su marca como clienta y me gusta especialmente el trato cercano que dan en tienda. Me encantaría aportar esa misma atención a su equipo.</p>
+  <p>Tengo disponibilidad inmediata y horario flexible. Quedo a su disposición para una entrevista cuando le venga bien.</p>
+  <p>Un saludo,<br>Laura Martínez · 600 123 456 · laura.martinez@email.com</p>
+</div>
+
+<h2 id="correo">4. Si la envías por correo</h2>
+<ul>
+  <li><strong>Asunto claro:</strong> “Candidatura Dependienta Valencia – Laura Martínez”.</li>
+  <li>Puedes escribir la carta en el <strong>cuerpo del correo</strong> (más cómodo de leer) y adjuntar el CV en PDF.</li>
+  <li>Revisa el nombre de la empresa y de la persona antes de enviar: es el error más fácil de cometer cuando reutilizas una carta.</li>
+</ul>
+<div class="tip"><p><strong>Consejo:</strong> asegúrate de que lo que cuentas en la carta aparece también en tu CV. Con ProCVX puedes ajustar el perfil y la experiencia a cada oferta y exportarlo a PDF en un minuto.</p></div>
+
+<h2 id="errores">5. Errores frecuentes</h2>
+<ul>
+  <li>Empezar con “Muy señores míos” y una frase de relleno. Ve al grano desde la primera línea.</li>
+  <li>Copiar tu CV en forma de párrafo. La carta elige y explica; no enumera.</li>
+  <li>Hablar solo de lo que quieres tú (“busco crecer profesionalmente”) y no de lo que aportas.</li>
+  <li>Usar la misma carta para todas las empresas. Se nota.</li>
+</ul>
+''',
+    },
+    {
+        'slug': 'perfil-profesional-cv',
+        'published': '2026-11-24',
+        'title': 'Perfil profesional del CV: cómo escribirlo y 10 ejemplos',
+        'short': 'Perfil profesional',
+        'description': 'Cómo escribir el perfil profesional (o extracto) de tu currículum en tres frases, con una fórmula sencilla y 10 ejemplos para distintos puestos y niveles de experiencia.',
+        'lead': 'El perfil profesional son las dos o tres líneas que van debajo de tu nombre. Es lo primero que se lee, así que tiene que responder rápido a una pregunta: ¿por qué debería seguir leyendo este CV?',
+        'body': '''
+<nav class="toc" aria-label="Contenido">
+  <strong>En esta guía</strong>
+  <ol>
+    <li><a href="#formula">Una fórmula en tres frases</a></li>
+    <li><a href="#ejemplos">10 ejemplos de perfil profesional</a></li>
+    <li><a href="#adaptar">Cómo adaptarlo a cada oferta</a></li>
+    <li><a href="#evitar">Qué evitar</a></li>
+  </ol>
+</nav>
+
+<h2 id="formula">1. Una fórmula en tres frases</h2>
+<ol>
+  <li><strong>Quién eres:</strong> tu puesto o titulación y, si los tienes, los años de experiencia.</li>
+  <li><strong>Qué sabes hacer:</strong> dos o tres especialidades, herramientas o un logro con número.</li>
+  <li><strong>Qué buscas:</strong> el tipo de puesto o de empresa al que quieres llegar.</li>
+</ol>
+<p>Escríbelo en primera persona sin pronombre (“Técnica de laboratorio con…”) o en tercera persona, pero no mezcles las dos formas. Entre 40 y 70 palabras es suficiente.</p>
+<div class="compare">
+  <div class="bad"><span class="label">Genérico</span>Profesional proactivo, orientado a resultados y con capacidad de trabajo en equipo.</div>
+  <div class="good"><span class="label">Concreto</span>Comercial con 6 años de experiencia en venta B2B de material industrial. Amplié la cartera de clientes de mi zona un 30 % en dos años. Busco un puesto de responsable de cuentas clave.</div>
+</div>
+
+<h2 id="ejemplos">2. 10 ejemplos de perfil profesional</h2>
+<div class="example">
+  <p><strong>Sin experiencia (recién titulado)</strong><br>
+  Graduada en Marketing y Comunicación con prácticas en una agencia digital, donde gestioné las redes sociales de tres clientes. Manejo Meta Business Suite, Canva y Google Analytics. Busco mi primer puesto en un equipo de marketing digital.</p>
+</div>
+<div class="example">
+  <p><strong>Estudiante de FP</strong><br>
+  Estudiante de segundo curso de Técnico en Sistemas Microinformáticos y Redes (finalizo en junio de 2026). Experiencia en montaje de equipos y soporte a usuarios durante las prácticas. Disponible para jornada de tarde.</p>
+</div>
+<div class="example">
+  <p><strong>Administración</strong><br>
+  Administrativa con 5 años de experiencia en contabilidad y facturación para pymes. Dominio de A3, Excel avanzado y presentación de impuestos trimestrales. Busco estabilidad en un departamento financiero.</p>
+</div>
+<div class="example">
+  <p><strong>Atención al cliente</strong><br>
+  Teleoperador con 3 años en atención al cliente y resolución de incidencias para una operadora de telefonía, con una valoración media de 4,7/5. Inglés B2. Interesado en puestos de soporte de segundo nivel.</p>
+</div>
+<div class="example">
+  <p><strong>Hostelería</strong><br>
+  Camarera con 4 años de experiencia en sala y barra en restaurantes de hasta 120 cubiertos. Carné de manipulador de alimentos y conocimientos de coctelería. Busco un puesto estable en un restaurante o un hotel.</p>
+</div>
+<div class="example">
+  <p><strong>Comercio</strong><br>
+  Dependiente con experiencia en tiendas de moda y electrónica: caja, reposición, escaparatismo y venta asesorada. Superé el objetivo de ventas mensual en 9 de los últimos 12 meses.</p>
+</div>
+<div class="example">
+  <p><strong>Logística</strong><br>
+  Mozo de almacén con carné de carretillero y 7 años de experiencia en preparación de pedidos con radiofrecuencia y SGA. Acostumbrado a turnos rotativos y picos de campaña.</p>
+</div>
+<div class="example">
+  <p><strong>Sanidad</strong><br>
+  Técnica en Cuidados Auxiliares de Enfermería (TCAE) con 2 años en planta de medicina interna y experiencia en residencias. Formación en movilización de pacientes y en primeros auxilios.</p>
+</div>
+<div class="example">
+  <p><strong>Tecnología</strong><br>
+  Desarrollador web con 4 años de experiencia en JavaScript, React y Node.js. He liderado la migración de una tienda online con 50.000 usuarios mensuales. Busco un puesto en un equipo de producto.</p>
+</div>
+<div class="example">
+  <p><strong>Cambio de sector</strong><br>
+  Tras 8 años como profesor de secundaria, me he especializado en formación corporativa con un curso de diseño instruccional. Experiencia en preparar contenidos, hablar en público y evaluar resultados. Busco un puesto de formador en empresa.</p>
+</div>
+
+<h2 id="adaptar">3. Cómo adaptarlo a cada oferta</h2>
+<p>El perfil es la parte del CV que más conviene cambiar entre una candidatura y otra:</p>
+<ul>
+  <li>Usa el <strong>mismo nombre de puesto</strong> que la oferta si encaja con tu experiencia.</li>
+  <li>Destaca primero las herramientas o requisitos que la oferta menciona. Así también ayudas a pasar los <a href="../cv-ats/">filtros ATS</a>.</li>
+  <li>Cambia la última frase (“qué buscas”) según el tipo de empresa.</li>
+</ul>
+<div class="tip"><p><strong>Consejo:</strong> en ProCVX guarda una copia de tu CV en JSON antes de adaptarlo. Así puedes tener una versión por sector y cargarla cuando la necesites.</p></div>
+
+<h2 id="evitar">4. Qué evitar</h2>
+<ul>
+  <li>Adjetivos sin pruebas: “dinámico”, “proactivo”, “resolutivo”. Sustitúyelos por un hecho.</li>
+  <li>Objetivos que solo hablan de ti (“busco desarrollarme”). Di qué aportas.</li>
+  <li>Párrafos de más de cuatro líneas. Si no se lee de un vistazo, no se lee.</li>
+  <li>Datos personales (edad, estado civil): no aportan y no hace falta incluirlos.</li>
+</ul>
+''',
+    },
+    {
+        'slug': 'cv-hosteleria',
+        'published': '2026-11-24',
+        'title': 'CV para hostelería: camarero, cocina y recepción',
+        'short': 'CV para hostelería',
+        'description': 'Cómo hacer un currículum para hostelería: qué destacar si buscas trabajo de camarero, ayudante de cocina o recepcionista, ejemplos de funciones y qué carnés incluir.',
+        'lead': 'En hostelería se contrata rápido y se lee rápido. Quien selecciona quiere saber en segundos dónde has trabajado, con qué volumen y si puedes empezar ya. Tu CV debe dejarlo claro de un vistazo.',
+        'body': '''
+<nav class="toc" aria-label="Contenido">
+  <strong>En esta guía</strong>
+  <ol>
+    <li><a href="#basico">Lo que no puede faltar</a></li>
+    <li><a href="#experiencia">Cómo describir la experiencia</a></li>
+    <li><a href="#puestos">Ejemplos por puesto</a></li>
+    <li><a href="#certificaciones">Carnés, cursos e idiomas</a></li>
+    <li><a href="#sin-experiencia">Si es tu primer trabajo en hostelería</a></li>
+  </ol>
+</nav>
+
+<h2 id="basico">1. Lo que no puede faltar</h2>
+<ul>
+  <li><strong>Teléfono visible</strong> arriba del todo. En hostelería se llama más que se escribe.</li>
+  <li><strong>Disponibilidad:</strong> inmediata, fines de semana, temporada de verano, turno partido… Ponlo en el perfil.</li>
+  <li><strong>Zona o ciudad</strong> y si tienes vehículo propio, sobre todo para horarios nocturnos.</li>
+  <li><strong>Una página</strong>, con la experiencia más reciente primero.</li>
+</ul>
+
+<h2 id="experiencia">2. Cómo describir la experiencia</h2>
+<p>“Camarero en el Bar X” no dice mucho. El tipo de local y el volumen de trabajo marcan la diferencia, porque no es lo mismo una cafetería tranquila que un restaurante con 200 cubiertos.</p>
+<ul>
+  <li>Tipo de local: cafetería, restaurante de menú, de carta, hotel, chiringuito, catering, eventos.</li>
+  <li>Volumen: cubiertos por servicio, mesas a tu cargo, habitaciones del hotel.</li>
+  <li>Funciones concretas y herramientas (TPV, PMS de hotel, comandas digitales).</li>
+</ul>
+<div class="compare">
+  <div class="bad"><span class="label">Poco claro</span>Camarero. Atender mesas y servir bebidas.</div>
+  <div class="good"><span class="label">Claro</span>Camarero de sala en restaurante de carta (90 cubiertos). Servicio de 6 mesas, recomendación de vinos, cobro en TPV y montaje de sala.</div>
+</div>
+
+<h2 id="puestos">3. Ejemplos por puesto</h2>
+<div class="example">
+  <p><strong>Camarero/a de sala o barra</strong><br>
+  • Servicio de sala y barra en turnos de hasta 150 cubiertos.<br>
+  • Preparación de cafés, combinados y coctelería básica.<br>
+  • Gestión de comandas y cobros con TPV; cierre de caja.</p>
+</div>
+<div class="example">
+  <p><strong>Ayudante de cocina</strong><br>
+  • Mise en place, elaboración de guarniciones y emplatado en partida de fríos.<br>
+  • Control de temperaturas y registros de APPCC.<br>
+  • Recepción de mercancía, rotación de producto y limpieza de la cocina.</p>
+</div>
+<div class="example">
+  <p><strong>Recepcionista de hotel</strong><br>
+  • Check-in y check-out en un hotel de 4 estrellas con 120 habitaciones.<br>
+  • Gestión de reservas en el PMS y en Booking.com.<br>
+  • Atención a clientes en español, inglés y francés.</p>
+</div>
+
+<h2 id="certificaciones">4. Carnés, cursos e idiomas</h2>
+<p>Ponlos en una sección propia de <strong>Certificaciones</strong>, que en este sector se mira mucho:</p>
+<ul>
+  <li><strong>Manipulador de alimentos</strong> (lo piden muchos locales para trabajar con comida).</li>
+  <li>Alérgenos, APPCC, coctelería, barista o sumillería.</li>
+  <li>Prevención de riesgos laborales.</li>
+  <li><strong>Idiomas</strong> con nivel real: en zonas turísticas el inglés, el francés o el alemán pueden decidir la contratación.</li>
+</ul>
+<div class="tip"><p><strong>En ProCVX:</strong> la sección de Certificaciones muestra cada curso con la entidad y la fecha en la columna lateral, para que se vea sin quitar sitio a la experiencia.</p></div>
+
+<h2 id="sin-experiencia">5. Si es tu primer trabajo en hostelería</h2>
+<p>Las ganas y la disponibilidad cuentan mucho, pero también puedes demostrar que sabes tratar con gente y trabajar bajo presión:</p>
+<ul>
+  <li>Trabajos de atención al público (tienda, monitor de tiempo libre, eventos).</li>
+  <li>Voluntariado en comedores, fiestas o asociaciones.</li>
+  <li>Un curso de manipulador de alimentos: es corto y muestra interés.</li>
+</ul>
+<p>Más ideas en la guía para hacer un <a href="../cv-sin-experiencia/">CV sin experiencia</a>.</p>
+''',
+    },
 ]
 
 
@@ -263,11 +508,13 @@ CTA = '''
 
 def build():
     out_dir = ROOT / 'guias'
-    urls = [SITE, SITE + 'guias/']
+    newest = max(g.get('published', PUBLISHED) for g in GUIDES)
+    urls = [(SITE, PUBLISHED), (SITE + 'guias/', newest)]
     org = {'@type': 'Organization', 'name': 'ProCVX', 'url': SITE}
 
     for guide in GUIDES:
         path = f"guias/{guide['slug']}/"
+        published = guide.get('published', PUBLISHED)
         related = ''.join(
             f'<li><a href="../{g["slug"]}/"><strong>{html.escape(g["title"])}</strong><span>{html.escape(g["description"])}</span></a></li>'
             for g in GUIDES if g is not guide
@@ -275,7 +522,7 @@ def build():
         body = f'''        <article>
             <h1>{html.escape(guide['title'])}</h1>
             <p class="lead">{guide['lead']}</p>
-            <p class="meta">Actualizado: <time datetime="{PUBLISHED}">22 de noviembre de 2026</time></p>
+            <p class="meta">Actualizado: <time datetime="{published}">{human_date(published)}</time></p>
 {guide['body']}
 {CTA.format(up='../../')}
         </article>
@@ -287,7 +534,7 @@ def build():
             {
                 '@context': 'https://schema.org', '@type': 'Article',
                 'headline': guide['title'], 'description': guide['description'],
-                'inLanguage': 'es', 'datePublished': PUBLISHED, 'dateModified': PUBLISHED,
+                'inLanguage': 'es', 'datePublished': published, 'dateModified': published,
                 'mainEntityOfPage': SITE + path, 'image': SITE + 'og-image.png',
                 'author': org, 'publisher': org,
             },
@@ -306,13 +553,13 @@ def build():
             title=guide['title'], description=guide['description'], path=path, body=body, depth=2,
             breadcrumbs=[('ProCVX', '../../'), ('Guías', '../'), (guide['short'], None)], json_ld=json_ld,
         ), encoding='utf-8')
-        urls.append(SITE + path)
+        urls.append((SITE + path, published))
 
     cards = ''.join(
         f'<li><a href="{g["slug"]}/"><strong>{html.escape(g["title"])}</strong><span>{html.escape(g["description"])}</span></a></li>'
         for g in GUIDES
     )
-    hub_description = 'Guías prácticas y gratuitas para hacer un buen currículum: CV sin experiencia, CV compatible con filtros ATS y CV para estudiantes y titulados de FP.'
+    hub_description = 'Guías prácticas y gratuitas para hacer un buen currículum: CV sin experiencia, filtros ATS, FP, hostelería, perfil profesional y carta de presentación.'
     hub_body = f'''        <h1>Guías para hacer un buen CV</h1>
         <p class="lead">Consejos prácticos y ejemplos para que tu currículum llegue a una persona y le convenza.</p>
         <ul class="cards">{cards}</ul>
@@ -326,7 +573,7 @@ def build():
 
     sitemap = ['<?xml version="1.0" encoding="UTF-8"?>',
                '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
-    sitemap += [f'  <url><loc>{u}</loc><lastmod>{PUBLISHED}</lastmod></url>' for u in urls]
+    sitemap += [f'  <url><loc>{u}</loc><lastmod>{d}</lastmod></url>' for u, d in urls]
     sitemap.append('</urlset>')
     (ROOT / 'sitemap.xml').write_text('\n'.join(sitemap) + '\n', encoding='utf-8')
     print(f'Built {len(GUIDES)} guides + hub, sitemap with {len(urls)} URLs')
