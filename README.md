@@ -27,7 +27,7 @@ Una aplicación web moderna e interactiva para crear currículums profesionales 
 *   **Datos de Ejemplo:** En la primera visita se cargan datos de ejemplo coherentes (en el idioma elegido) que caben en una página; el botón **Ejemplo** permite recargarlos. Tras **Limpiar**, el CV queda vacío aunque recargues la página.
 *   **Certificaciones y Voluntariado:** Secciones propias para certificaciones o cursos (nombre, entidad y fecha, en la columna lateral) y para voluntariado (rol, organización, fechas y logros con viñetas, en la columna principal). Si ya tenías un orden de secciones guardado, las nuevas se colocan en su sitio natural.
 *   **Funciona sin Conexión (PWA):** Tras la primera visita desde la web publicada, un *service worker* guarda los archivos de la aplicación, así que se puede abrir y usar sin internet. También se puede instalar como app desde el navegador. La copia en caché no contiene datos del usuario.
-*   **Guías para hacer un CV:** páginas en `guias/` (CV sin experiencia, CV compatible con ATS, CV para FP) pensadas para atraer visitas desde Google, con `sitemap.xml` y `robots.txt`.
+*   **Guías para hacer un CV:** páginas en `guias/` (CV sin experiencia, CV compatible con ATS, CV para FP, CV para hostelería, perfil profesional y carta de presentación) pensadas para atraer visitas desde Google, con `sitemap.xml` y `robots.txt`.
 *   **Donaciones opcionales:** un enlace discreto en el pie y una sugerencia tras exportar el PDF (una vez por sesión). Solo aparecen si hay un enlace configurado.
 *   **Privacidad Real:** Todo se procesa en tu navegador y los datos del CV nunca salen del dispositivo. Librerías, iconos y tipografías se alojan en el propio proyecto. Las visitas se miden con Cloudflare Web Analytics (sin cookies), con el script incluido en `index.html` y en las guías (instalación manual: la automática no funciona con Workers ni para visitantes de la UE).
 
@@ -143,3 +143,5 @@ npm test
 *   `tests/modules.test.js`: tests unitarios de las partes puras de `render.js` (HTML de cada bloque) y `sections.js` (completar un orden de secciones guardado) (solo Node).
 *   `tests/site.test.js`: comprueba las guías (título, descripción, `canonical`, datos estructurados y enlaces internos), el sitemap y el `robots.txt`.
 *   `tests/e2e.test.js`: abre la app en Chromium con Playwright y prueba edición, guardado, importar/exportar, idiomas, teclado, móvil, certificaciones y voluntariado, la exportación a PDF (comprueba que el ejemplo cabe en una página A4 en los dos idiomas) y el modo sin conexión (levanta un servidor local y recarga la app sin red). Necesita `pdfinfo`/`pdftotext` (poppler-utils) y un Chromium para Playwright (`npx playwright install chromium`).
+
+GitHub Actions (`.github/workflows/tests.yml`) ejecuta `npm test` completo, con Playwright y poppler, en cada pull request y en cada push a `main`.
